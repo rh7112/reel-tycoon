@@ -7,7 +7,9 @@ extends Node
 
 const BOBBER_REST_Y: float = 420.0 # at the "shore" -- resting position when idle
 const BOBBER_CAST_Y: float = 180.0 # out in the "water" -- resting position while a line is out
-const BOBBER_BITE_DIP: float = 40.0 # extra downward jerk when a fish bites
+const BOBBER_SUBMERGE_DEPTH: float = 70.0 # extra downward pull when a fish bites -- it goes under
+const BOBBER_WIGGLE_RADIUS: float = 9.0 # how far the submerged bobber jitters per hop
+const BOBBER_WIGGLE_HOP_DURATION: float = 0.06 # seconds per jitter hop -- fast enough to read as "fighting"
 const ROD_TIP: Vector2 = Vector2(410.0, 150.0) # where the fishing line visually starts
 const REEL_SPIN_SPEED: float = 6.0 # radians/sec while REELING
 

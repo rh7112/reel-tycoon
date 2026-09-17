@@ -170,7 +170,7 @@ func _tick_reel(delta: float) -> void:
 		_finish_reel(false)
 		return
 
-	var noise_amplitude := _size_noise_amplitude(_pending_fish, _pending_weight_lb) * line.noise_dampen_mult
+	var noise_amplitude: float = _size_noise_amplitude(_pending_fish, _pending_weight_lb) * line.noise_dampen_mult
 	var noise := randf_range(-noise_amplitude, noise_amplitude)
 	var rise_rate: float = stats.tension_rise_rate * reel.tension_rise_mult
 	var fall_rate: float = stats.tension_fall_rate * reel.tension_fall_mult
