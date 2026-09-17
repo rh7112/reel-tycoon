@@ -17,6 +17,7 @@ min_rod_tier_required = 1
 species = Array[Resource]([ExtResource("2"), ExtResource("3"), ExtResource("4"), ExtResource("5")])
 min_depth_ft = 2.0
 max_depth_ft = 22.0
+cover_density = 1.0
 latitude = 39.08
 longitude = -86.40
 requires_complete_region = &"pond"

@@ -34,6 +34,7 @@ func _ready() -> void:
 	controller.tension_updated.connect(_on_tension_updated)
 	controller.fish_escaped.connect(_on_fish_escaped)
 	controller.fish_sighted.connect(_on_fish_sighted)
+	controller.lure_lost.connect(_on_lure_lost)
 	Economy.coins_changed.connect(_on_coins_changed)
 
 	%ActionButton.button_down.connect(_on_action_button_down)
@@ -152,6 +153,15 @@ func _on_fish_sighted(size_bucket: String) -> void:
 
 func _on_fish_escaped() -> void:
 	%StatusLabel.text = "It got away!"
+
+## Fires after the state's already back to IDLE (see FishingController.
+## cast's ordering note) -- this message is meant to win and stay put,
+## not get immediately overwritten by the generic "Tap Cast" text.
+func _on_lure_lost(lure_name: String, was_consumable: bool) -> void:
+	if was_consumable:
+		%StatusLabel.text = "Your %s came off the hook!" % lure_name
+	else:
+		%StatusLabel.text = "Lost your %s in a snag!" % lure_name
 
 func _on_coins_changed(amount: int) -> void:
 	%CoinsLabel.text = "Coins: %d" % amount

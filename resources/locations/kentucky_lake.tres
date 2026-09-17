@@ -17,6 +17,7 @@ min_rod_tier_required = 2
 species = Array[Resource]([ExtResource("2"), ExtResource("3"), ExtResource("4"), ExtResource("5")])
 min_depth_ft = 3.0
 max_depth_ft = 28.0
+cover_density = 1.3
 latitude = 36.95
 longitude = -88.05
 requires_complete_region = &"northern_lake"

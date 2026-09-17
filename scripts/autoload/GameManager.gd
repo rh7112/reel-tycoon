@@ -30,10 +30,14 @@ var sponsorship_tier: int = 0
 ## deliberately separate from rod_tier.
 var region_mastery: Dictionary = {}
 
-## Worm-on-a-bobber is the classic beginner setup -- everyone starts
-## owning and using it, same as they start on a push-button reel below.
-## Every other lure is something to unlock later.
-var owned_lures: Array[StringName] = [&"night_crawler_jig"]
+## Lure id (String, not StringName -- see record_catch's note on why)
+## -> quantity remaining. Consumable bait (worm, dough ball) is bought
+## in packs and used up gradually; hard lures are bought one at a time
+## and only lost to a snag/bite-off -- see Lure.gd. Missing/zero means
+## none owned. Worm-on-a-bobber is the classic beginner setup -- a
+## starter pack is owned from the start, same as starting on a
+## push-button reel below.
+var owned_lure_counts: Dictionary = {"night_crawler_jig": 20}
 var equipped_lure: StringName = &"night_crawler_jig"
 
 ## One-time gear purchase -- lets the player see an approaching fish's
@@ -148,15 +152,31 @@ func get_region_mastery(region_id: StringName) -> int:
 func upgrade_region_mastery(region_id: StringName) -> void:
 	region_mastery[region_id] = get_region_mastery(region_id) + 1
 
-func owns_lure(lure_id: StringName) -> bool:
-	return owned_lures.has(lure_id)
+func get_lure_count(lure_id: StringName) -> int:
+	return owned_lure_counts.get(String(lure_id), 0)
 
-func buy_lure(lure_id: StringName) -> void:
-	if not owns_lure(lure_id):
-		owned_lures.append(lure_id)
+func owns_any_lure(lure_id: StringName) -> bool:
+	return get_lure_count(lure_id) > 0
+
+## Grants `amount` units -- for a fresh purchase this is the lure's
+## pack_size (1 for a hard lure, e.g. 20 for a pack of worms).
+func add_lure_count(lure_id: StringName, amount: int) -> void:
+	var key := String(lure_id)
+	owned_lure_counts[key] = get_lure_count(lure_id) + amount
+
+## Uses up one unit -- called on the per-cast loss roll
+## (FishingController._roll_lure_loss), not on ownership/equip. Returns
+## false (and does nothing) if there were none left to consume.
+func consume_lure(lure_id: StringName) -> bool:
+	var key := String(lure_id)
+	var count := get_lure_count(lure_id)
+	if count <= 0:
+		return false
+	owned_lure_counts[key] = count - 1
+	return true
 
 func equip_lure(lure_id: StringName) -> void:
-	if owns_lure(lure_id):
+	if owns_any_lure(lure_id):
 		equipped_lure = lure_id
 
 func owns_reel_type(reel_id: StringName) -> bool:
@@ -208,7 +228,7 @@ func save() -> void:
 		"unlocked_locations": unlocked_locations,
 		"current_location": String(current_location),
 		"region_mastery": region_mastery,
-		"owned_lures": owned_lures,
+		"owned_lure_counts": owned_lure_counts,
 		"equipped_lure": String(equipped_lure),
 		"fish_records": fish_records,
 		"cards": cards,
@@ -234,7 +254,7 @@ func _load() -> void:
 	unlocked_locations.assign(data.get("unlocked_locations", [&"pond"]))
 	current_location = StringName(data.get("current_location", "pond"))
 	region_mastery = data.get("region_mastery", {})
-	owned_lures.assign(data.get("owned_lures", [&"night_crawler_jig"]))
+	owned_lure_counts = data.get("owned_lure_counts", {"night_crawler_jig": 20})
 	equipped_lure = StringName(data.get("equipped_lure", "night_crawler_jig"))
 	fish_records = data.get("fish_records", {})
 	cards = data.get("cards", {})

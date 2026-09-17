@@ -106,6 +106,18 @@ exactly what to check first if something doesn't load.
 - Lures (`resources/lures/*.tres`, all original names, no real brands) --
   `type` and `effective_depth_ft` affect bite odds; `color`/`size` are
   real, ownable, displayed attributes that don't affect odds yet.
+  Tracked as quantities now (`GameManager.owned_lure_counts`), not a
+  boolean owned-or-not: consumable bait (worm, dough ball) is bought in
+  packs at realistic pricing (worms ~$5/20) and has a flat per-cast
+  chance of getting used up regardless of conditions; hard lures
+  (spinner/crankbait/jerkbait/topwater) are bought individually and are
+  only lost to a snag/bite-off, scaled by the region's `cover_density`
+  (Kentucky Lake's real standing timber earns it the highest) and how
+  shallow/bank-adjacent the chosen depth is. Rolled once per cast
+  (`FishingController._roll_lure_loss`); losing a lure ends that cast
+  immediately with a message, before any bite roll happens. Running out
+  of the equipped lure falls back to bare-hook (bobber-style) behavior
+  everywhere at once, not a special case per system.
 - Tackle (`ReelTypes.gd`/`LineTypes.gd`) -- reel type (push-button/
   spinning/baitcaster) and line type (mono/fluoro/braided) are owned/
   equipped like lures, not a linear upgrade ladder. Push-button carries

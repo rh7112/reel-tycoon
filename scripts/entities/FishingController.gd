@@ -64,6 +64,11 @@ signal fish_escaped()
 ## before it does. size_bucket is one of "small"/"medium"/"large"/"trophy".
 signal fish_sighted(size_bucket: String)
 
+## Fires whenever a cast costs the equipped lure outright -- either a
+## consumable's baseline per-cast loss, or a hard lure's snag/bite-off.
+## See _roll_lure_loss.
+signal lure_lost(lure_name: String, was_consumable: bool)
+
 func _ready() -> void:
 	# The scene's exported `location` is only the fresh-install default --
 	# a returning player resumes wherever GameManager last saved them.
@@ -150,18 +155,68 @@ func cast() -> void:
 	# Cast animation/travel time is cosmetic for now -- tune once real art
 	# and a rod-tier-based cast distance stat exist.
 	await get_tree().create_timer(0.6).timeout
+	var lost_lure := _roll_lure_loss()
+	if lost_lure != null:
+		# State change first, THEN the signal -- lure_lost must fire
+		# after IDLE's own state_changed, or the HUD's generic "Tap
+		# Cast to fish!" status text would immediately overwrite the
+		# "you lost your X" message this signal is supposed to show.
+		_set_state(State.IDLE)
+		lure_lost.emit(lost_lure.display_name, lost_lure.is_consumable)
+		return
 	_start_waiting()
+
+## The equipped lure, or null if none is equipped OR the player has run
+## out of it (Lure ownership is a tracked quantity now, not a boolean --
+## see GameManager.owned_lure_counts). Every place that reads the
+## equipped lure goes through here, so running out consistently falls
+## back to bare-hook behavior everywhere at once, rather than needing
+## the same "did I actually run out" check duplicated in several places.
+func _effective_lure() -> Lure:
+	var lure: Lure = Lures.get_by_id(GameManager.equipped_lure)
+	if lure == null or GameManager.get_lure_count(lure.id) <= 0:
+		return null
+	return lure
 
 ## Which of the two sub-loops this cast follows -- a still/suspended
 ## bait waits passively (the classic bobber-watch), an actively worked
 ## lure only advances toward a bite while the player holds the button to
-## reel it in. A bare hook (no lure equipped) defaults to the passive
-## style -- see Lure.gd's presentation_style for the full reasoning.
-## Public so the HUD can branch its status text/visuals the same way
-## without duplicating the "no lure equipped" fallback rule.
+## reel it in. A bare hook (no lure equipped, or out of the equipped
+## one) defaults to the passive style -- see Lure.gd's presentation_style
+## for the full reasoning. Public so the HUD can branch its status
+## text/visuals the same way without duplicating the fallback rule.
 func get_current_style() -> StringName:
-	var lure: Lure = Lures.get_by_id(GameManager.equipped_lure)
+	var lure := _effective_lure()
 	return lure.presentation_style if lure != null else &"bobber"
+
+## Rolls whether this cast costs the equipped lure outright -- a
+## consumable (worm, dough ball) has some baseline chance regardless of
+## conditions; a hard lure is only lost to a snag/bite-off, scaled by
+## the region's cover_density and how shallow/bank-adjacent the chosen
+## depth is (real structure like downed trees is usually closer to
+## shore than the middle of open water). Returns the lost Lure (already
+## consumed via GameManager.consume_lure), or null if nothing was lost --
+## does NOT emit lure_lost itself, see cast() for why the ordering matters.
+func _roll_lure_loss() -> Lure:
+	var lure := _effective_lure()
+	if lure == null:
+		return null
+	var chance: float = _lure_loss_chance(lure)
+	if chance <= 0.0 or randf() >= chance:
+		return null
+	GameManager.consume_lure(lure.id)
+	return lure
+
+func _lure_loss_chance(lure: Lure) -> float:
+	if lure.is_consumable:
+		return lure.base_loss_chance
+	if lure.snag_risk <= 0.0 or location == null:
+		return lure.snag_risk
+	var depth_fraction: float = 0.0
+	if location.max_depth_ft > location.min_depth_ft:
+		depth_fraction = clamp((_current_depth_ft - location.min_depth_ft) / (location.max_depth_ft - location.min_depth_ft), 0.0, 1.0)
+	var depth_factor: float = lerp(1.5, 0.5, depth_fraction)
+	return lure.snag_risk * location.cover_density * depth_factor
 
 ## Rolls the candidate catch now, at the start of the wait, rather than
 ## at hook-time -- this is what lets polarized glasses show a real
@@ -308,7 +363,7 @@ func _line_weight_snap_bonus(fish_weight_lb: float) -> float:
 func _lure_reel_match_bonus(reel_preferred_lure_types: Array) -> float:
 	if reel_preferred_lure_types.is_empty():
 		return 1.0
-	var lure: Lure = Lures.get_by_id(GameManager.equipped_lure)
+	var lure := _effective_lure()
 	if lure == null:
 		return 1.0
 	return 1.15 if reel_preferred_lure_types.has(lure.type) else 0.9
@@ -394,7 +449,7 @@ func _roll_candidate_catch() -> Dictionary:
 		return {}
 
 	var weather_id: StringName = WeatherService.get_weather(location.id)
-	var lure: Lure = Lures.get_by_id(GameManager.equipped_lure)
+	var lure := _effective_lure()
 	var tackle_leniency := _tackle_leniency()
 
 	var candidates: Array[Dictionary] = []
