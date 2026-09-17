@@ -32,7 +32,6 @@ func _ready() -> void:
 
 	controller.state_changed.connect(_on_state_changed)
 	controller.tension_updated.connect(_on_tension_updated)
-	controller.catch_result.connect(_on_catch_result)
 	controller.fish_escaped.connect(_on_fish_escaped)
 	controller.fish_sighted.connect(_on_fish_sighted)
 	Economy.coins_changed.connect(_on_coins_changed)
@@ -151,11 +150,6 @@ func _on_fish_sighted(size_bucket: String) -> void:
 	var tween := create_tween()
 	tween.tween_property(%FishShadow, "position", %Bobber.position + Vector2(18.0, 10.0), FishingController.SIGHT_PREVIEW_SECONDS * 0.85).set_trans(Tween.TRANS_SINE)
 
-func _on_catch_result(fish: Fish, weight_lb: float, coins: int, rarity_tier: CardRarity.Tier) -> void:
-	var rarity_name := CardRarity.name_for_tier(rarity_tier)
-	%StatusLabel.text = "%s! %.1flb %s -- +%d coins" % [rarity_name, weight_lb, fish.display_name, coins]
-	_spawn_coin_popup(coins, CardRarity.color_for_tier(rarity_tier))
-
 func _on_fish_escaped() -> void:
 	%StatusLabel.text = "It got away!"
 
@@ -244,20 +238,3 @@ func _kill_bob_tween() -> void:
 	if _bob_tween != null and _bob_tween.is_valid():
 		_bob_tween.kill()
 	_bob_tween = null
-
-## Simple "+N" popup that floats up and fades -- the kind of cheap juice
-## that makes a currency gain actually feel like a reward instead of a
-## number quietly changing in the corner.
-func _spawn_coin_popup(coins: int, color: Color = Color(1.0, 0.85, 0.2)) -> void:
-	var popup := Label.new()
-	popup.text = "+%d" % coins
-	popup.add_theme_font_size_override("font_size", 40)
-	popup.add_theme_color_override("font_color", color)
-	popup.position = Vector2(300.0, 100.0)
-	controller.add_child(popup)
-
-	var tween := popup.create_tween()
-	tween.set_parallel(true)
-	tween.tween_property(popup, "position:y", popup.position.y - 60.0, 0.9).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tween.tween_property(popup, "modulate:a", 0.0, 0.9)
-	tween.chain().tween_callback(popup.queue_free)
