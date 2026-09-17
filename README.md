@@ -119,9 +119,21 @@ exactly what to check first if something doesn't load.
 - Card collection (`GameManager.cards`) + region-completion gate.
 - A local-only leaderboard (`LeaderboardService.gd`) that's honest about
   not comparing to real other players yet.
-- A tabbed menu (Rod / Region / Lures / Records / Ranks) built almost
+- A tabbed menu (Gear / Region / Lures / Records / Ranks) built almost
   entirely in code (`scripts/ui/*.gd`) rather than hand-placed scene
-  nodes, so new regions/lures/cards show up automatically.
+  nodes, so new regions/lures/cards show up automatically. Styled by a
+  shared `Theme` built in code (`GameTheme.gd`, applied once at the
+  scene root) rather than a hand-authored `.tres` Theme -- fixes the
+  original "transparency makes it hard to read" panel and gives every
+  button/panel/label real contrast and an active-tab highlight, without
+  needing to style each of the dynamically-built tabs individually.
+- Boats (`BoatTiers.gd`) -- Rickety Dock -> Kayak -> Jon Boat -> Cheap
+  Bass Boat -> Tournament Bass Boat, a straight upgrade ladder (unlike
+  tackle/lures) that caps how deep `FishingController.set_depth` will
+  let the player fish, combined with each region's own real range --
+  whichever is smaller wins. Drawn per-tier (`DockVisual.gd`, actually
+  redraws on tier change, unlike the static Bobber/ReelWheel visuals),
+  positioned at the shoreline.
 - Placeholder visuals with no real art yet: a two-tone drawn bobber, a
   static rod + dynamic fishing line (`Line2D`), a reel wheel that spins
   while reeling, a simple sky/water/shoreline backdrop tinted per region.

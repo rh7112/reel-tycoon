@@ -12,6 +12,7 @@
 [ext_resource type="Script" path="res://scripts/ui/RecordsPanel.gd" id="10"]
 [ext_resource type="Script" path="res://scripts/ui/LeaderboardPanel.gd" id="11"]
 [ext_resource type="Script" path="res://scripts/ui/FishShadowVisual.gd" id="12"]
+[ext_resource type="Script" path="res://scripts/ui/DockVisual.gd" id="13"]
 
 [node name="FishingScene" type="Control"]
 layout_mode = 3
@@ -39,6 +40,11 @@ offset_top = 140.0
 offset_right = 720.0
 offset_bottom = 152.0
 color = Color(0.76, 0.7, 0.5, 1)
+
+[node name="Dock" type="Node2D" parent="."]
+unique_name_in_owner = true
+position = Vector2(520, 145)
+script = ExtResource("13")
 
 [node name="Rod" type="Line2D" parent="."]
 points = PackedVector2Array(650, 1230, 410, 150)
@@ -113,9 +119,9 @@ text = "Tap Cast to fish!"
 unique_name_in_owner = true
 layout_mode = 0
 offset_left = 60.0
-offset_top = 620.0
+offset_top = 930.0
 offset_right = 660.0
-offset_bottom = 680.0
+offset_bottom = 990.0
 color = Color(0.15, 0.15, 0.18, 1)
 
 [node name="SafeBand" type="ColorRect" parent="TensionTrack"]
@@ -140,9 +146,9 @@ color = Color(1, 1, 1, 1)
 unique_name_in_owner = true
 layout_mode = 0
 offset_left = 60.0
-offset_top = 584.0
+offset_top = 900.0
 offset_right = 660.0
-offset_bottom = 616.0
+offset_bottom = 928.0
 theme_override_font_sizes/font_size = 20
 horizontal_alignment = 1
 text = "TENSION"
@@ -151,9 +157,9 @@ text = "TENSION"
 unique_name_in_owner = true
 layout_mode = 0
 offset_left = 60.0
-offset_top = 760.0
+offset_top = 1025.0
 offset_right = 660.0
-offset_bottom = 800.0
+offset_bottom = 1065.0
 color = Color(0.15, 0.15, 0.18, 1)
 
 [node name="ProgressFillBar" type="ColorRect" parent="ProgressTrack"]
@@ -169,9 +175,9 @@ color = Color(0.95, 0.7, 0.15, 1)
 unique_name_in_owner = true
 layout_mode = 0
 offset_left = 60.0
-offset_top = 724.0
+offset_top = 995.0
 offset_right = 660.0
-offset_bottom = 756.0
+offset_bottom = 1023.0
 theme_override_font_sizes/font_size = 20
 horizontal_alignment = 1
 text = "CATCH PROGRESS"
@@ -180,9 +186,9 @@ text = "CATCH PROGRESS"
 unique_name_in_owner = true
 layout_mode = 0
 offset_left = 60.0
-offset_top = 900.0
+offset_top = 580.0
 offset_right = 160.0
-offset_bottom = 960.0
+offset_bottom = 640.0
 theme_override_font_sizes/font_size = 28
 text = "-"
 
@@ -190,9 +196,9 @@ text = "-"
 unique_name_in_owner = true
 layout_mode = 0
 offset_left = 170.0
-offset_top = 900.0
+offset_top = 580.0
 offset_right = 550.0
-offset_bottom = 960.0
+offset_bottom = 640.0
 theme_override_font_sizes/font_size = 26
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -202,9 +208,9 @@ text = "Depth: 8ft"
 unique_name_in_owner = true
 layout_mode = 0
 offset_left = 560.0
-offset_top = 900.0
+offset_top = 580.0
 offset_right = 660.0
-offset_bottom = 960.0
+offset_bottom = 640.0
 theme_override_font_sizes/font_size = 28
 text = "+"
 

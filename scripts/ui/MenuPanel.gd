@@ -16,16 +16,16 @@ extends Control
 @onready var _ranks_tab: Control = %RanksTab
 
 var _tabs: Array[Control]
+var _tab_buttons: Array[Button]
 
 func _ready() -> void:
 	hide()
 	_tabs = [_rod_tab, _region_tab, _lure_tab, _records_tab, _ranks_tab]
+	_tab_buttons = [%RodTabButton, %RegionTabButton, %LureTabButton, %RecordsTabButton, %RanksTabButton]
 
-	%RodTabButton.pressed.connect(_show_tab.bind(_rod_tab))
-	%RegionTabButton.pressed.connect(_show_tab.bind(_region_tab))
-	%LureTabButton.pressed.connect(_show_tab.bind(_lure_tab))
-	%RecordsTabButton.pressed.connect(_show_tab.bind(_records_tab))
-	%RanksTabButton.pressed.connect(_show_tab.bind(_ranks_tab))
+	for i in _tab_buttons.size():
+		_tab_buttons[i].toggle_mode = true
+		_tab_buttons[i].pressed.connect(_show_tab.bind(_tabs[i]))
 	%CloseMenuButton.pressed.connect(hide)
 
 	_region_tab.travel_requested.connect(_on_travel_requested)
@@ -35,8 +35,12 @@ func open() -> void:
 	_show_tab(_rod_tab)
 
 func _show_tab(tab: Control) -> void:
-	for t in _tabs:
-		t.visible = (t == tab)
+	for i in _tabs.size():
+		var is_active: bool = _tabs[i] == tab
+		_tabs[i].visible = is_active
+		# button_pressed (not .pressed()) just sets the toggled-on visual
+		# state -- doesn't re-fire the pressed signal, so this can't loop.
+		_tab_buttons[i].button_pressed = is_active
 	if tab.has_method("refresh"):
 		tab.refresh()
 
