@@ -145,6 +145,28 @@ func equip_lure(lure_id: StringName) -> void:
 	if owns_lure(lure_id):
 		equipped_lure = lure_id
 
+func owns_reel_type(reel_id: StringName) -> bool:
+	return owned_reel_types.has(reel_id)
+
+func buy_reel_type(reel_id: StringName) -> void:
+	if not owns_reel_type(reel_id):
+		owned_reel_types.append(reel_id)
+
+func equip_reel_type(reel_id: StringName) -> void:
+	if owns_reel_type(reel_id):
+		equipped_reel_type = reel_id
+
+func owns_line_type(line_id: StringName) -> bool:
+	return owned_line_types.has(line_id)
+
+func buy_line_type(line_id: StringName) -> void:
+	if not owns_line_type(line_id):
+		owned_line_types.append(line_id)
+
+func equip_line_type(line_id: StringName) -> void:
+	if owns_line_type(line_id):
+		equipped_line_type = line_id
+
 func _apply_offline_earnings() -> void:
 	if _last_active_unix <= 0.0 or idle_coin_rate <= 0.0:
 		return

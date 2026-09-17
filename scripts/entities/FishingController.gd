@@ -159,9 +159,22 @@ func _process(delta: float) -> void:
 
 func _tick_reel(delta: float) -> void:
 	var stats := _tier_stats()
-	var noise_amplitude := _size_noise_amplitude(_pending_fish, _pending_weight_lb)
+	var reel: Dictionary = ReelTypes.get_by_id(GameManager.equipped_reel_type)
+	var line: Dictionary = LineTypes.get_by_id(GameManager.equipped_line_type)
+
+	# Instant snap-off -- a distinct failure mode from the tension bar
+	# itself, matching a push-button reel's real weak drag, and a line
+	# rated well under the fish's actual weight.
+	var snap_chance: float = reel.snap_chance_per_sec + _line_weight_snap_bonus(_pending_weight_lb)
+	if snap_chance > 0.0 and randf() < snap_chance * delta:
+		_finish_reel(false)
+		return
+
+	var noise_amplitude := _size_noise_amplitude(_pending_fish, _pending_weight_lb) * line.noise_dampen_mult
 	var noise := randf_range(-noise_amplitude, noise_amplitude)
-	_tension += (stats.tension_rise_rate if _holding_reel else -stats.tension_fall_rate) * delta + noise * delta
+	var rise_rate: float = stats.tension_rise_rate * reel.tension_rise_mult
+	var fall_rate: float = stats.tension_fall_rate * reel.tension_fall_mult
+	_tension += (rise_rate if _holding_reel else -fall_rate) * delta + noise * delta
 	_tension = clamp(_tension, 0.0, 1.0)
 
 	if _tension <= 0.0:
@@ -173,7 +186,9 @@ func _tick_reel(delta: float) -> void:
 
 	var safe_band := get_safe_band()
 	if _tension >= safe_band.x and _tension <= safe_band.y:
-		_progress += stats.progress_fill_rate * delta
+		var fill_rate: float = stats.progress_fill_rate * reel.progress_fill_mult * line.progress_fill_mult
+		fill_rate *= _lure_reel_match_bonus(reel.preferred_lure_types)
+		_progress += fill_rate * delta
 
 	tension_updated.emit(_tension, _progress)
 
@@ -184,6 +199,32 @@ func _size_noise_amplitude(fish: Fish, weight_lb: float) -> float:
 	if fish == null:
 		return 0.0
 	return _weight_ratio(fish, weight_lb) * MAX_SIZE_NOISE_AMPLITUDE
+
+## Extra snap risk when the rolled fish is heavier than the spooled line
+## is rated for -- "a 20lb fish on 10lb test" should be genuinely risky.
+func _line_weight_snap_bonus(fish_weight_lb: float) -> float:
+	var overage: float = fish_weight_lb - float(GameManager.line_weight_lb)
+	return max(overage, 0.0) * 0.01
+
+## A baitcaster paired with a crankbait (or spinning with a spinner/worm/
+## frog) works better together than a mismatched pairing -- see
+## ReelTypes.gd for why this isn't just "baitcaster is strictly better".
+func _lure_reel_match_bonus(reel_preferred_lure_types: Array) -> float:
+	if reel_preferred_lure_types.is_empty():
+		return 1.0
+	var lure: Lure = Lures.get_by_id(GameManager.equipped_lure)
+	if lure == null:
+		return 1.0
+	return 1.15 if reel_preferred_lure_types.has(lure.type) else 0.9
+
+## Line type's stealth (or lack of it) plus a line-weight visibility
+## penalty (heavier = more visible), combined into one leniency value
+## that nudges how punishing a weather/lure/depth mismatch is -- see
+## _affinity_multiplier.
+func _tackle_leniency() -> float:
+	var line: Dictionary = LineTypes.get_by_id(GameManager.equipped_line_type)
+	var visibility_penalty: float = clamp((float(GameManager.line_weight_lb) - 10.0) * 0.01, -0.05, 0.15)
+	return line.affinity_leniency - visibility_penalty
 
 func _finish_reel(success: bool) -> void:
 	if success:
@@ -230,13 +271,14 @@ func _roll_candidate_catch() -> Dictionary:
 
 	var weather_id: StringName = WeatherService.get_weather(location.id)
 	var lure: Lure = Lures.get_by_id(GameManager.equipped_lure)
+	var tackle_leniency := _tackle_leniency()
 
 	var candidates: Array[Dictionary] = []
 	var total_weight: float = 0.0
 	for fish in location.species:
 		var weight_lb := _roll_weight(fish)
 		var profile := fish.resolve_profile(weight_lb)
-		var multiplier := _affinity_multiplier(profile, weather_id, lure, _current_depth_ft)
+		var multiplier := _affinity_multiplier(profile, weather_id, lure, _current_depth_ft, tackle_leniency)
 		var effective_weight: float = max(fish.catch_weight, 0.0) * multiplier
 		candidates.append({"fish": fish, "weight_lb": weight_lb, "effective_weight": effective_weight})
 		total_weight += effective_weight
@@ -262,7 +304,7 @@ func _roll_candidate_catch() -> Dictionary:
 func _roll_weight(fish: Fish) -> float:
 	return fish.min_weight_lb + (fish.max_weight_lb - fish.min_weight_lb) * pow(randf(), fish.size_skew)
 
-func _affinity_multiplier(profile: Dictionary, weather_id: StringName, lure: Lure, depth_ft: float) -> float:
+func _affinity_multiplier(profile: Dictionary, weather_id: StringName, lure: Lure, depth_ft: float, tackle_leniency: float) -> float:
 	var strength: float = profile.bite_affinity_strength
 	if strength <= 0.0:
 		return 1.0
@@ -278,7 +320,10 @@ func _affinity_multiplier(profile: Dictionary, weather_id: StringName, lure: Lur
 	var depth_match: bool = depth_ft >= depth_range.x and depth_ft <= depth_range.y
 
 	var match_ratio: float = float(int(weather_match) + int(lure_match) + int(depth_match)) / 3.0
-	var bad_multiplier: float = lerp(1.0, 0.05, strength)
+	# tackle_leniency (from line type + line weight -- see _tackle_leniency)
+	# nudges how forgiving a mismatch is: a stealthy line softens it, a
+	# heavy/visible one makes it worse.
+	var bad_multiplier: float = clamp(lerp(1.0, 0.05, strength) + tackle_leniency, 0.01, 1.0)
 	var good_multiplier: float = lerp(1.0, 3.0, strength)
 	return lerp(bad_multiplier, good_multiplier, match_ratio)
 

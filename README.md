@@ -89,6 +89,16 @@ exactly what to check first if something doesn't load.
 - Lures (`resources/lures/*.tres`, all original names, no real brands) --
   `type` and `effective_depth_ft` affect bite odds; `color`/`size` are
   real, ownable, displayed attributes that don't affect odds yet.
+- Tackle (`ReelTypes.gd`/`LineTypes.gd`) -- reel type (push-button/
+  spinning/baitcaster) and line type (mono/fluoro/braided) are owned/
+  equipped like lures, not a linear upgrade ladder. Push-button carries
+  its own snap-off risk; baitcaster pairs best with heavier lure types
+  (crankbait/jerkbait), spinning with lighter ones -- a real tradeoff,
+  not "baitcaster is strictly better." Line weight (lb test) is a free
+  choice: heavier handles a big fish without snapping, but is more
+  visible to line-shy species. All wired into
+  `FishingController._tick_reel`/`_affinity_multiplier`. Equip from the
+  "Gear" menu tab (`RodPanel.gd`).
 - Card collection (`GameManager.cards`) + region-completion gate.
 - A local-only leaderboard (`LeaderboardService.gd`) that's honest about
   not comparing to real other players yet.
@@ -100,15 +110,6 @@ exactly what to check first if something doesn't load.
   while reeling, a simple sky/water/shoreline backdrop tinted per region.
 
 ### Data modeled but NOT wired into gameplay yet
-- **Tackle**: `GameManager` has fields for reel type (push-button /
-  spinning / baitcaster), line type (mono / fluoro / braided), and line
-  weight (lb test) -- Ryan's ask was push-button = higher snap-off risk,
-  spinning/baitcaster each better for different lure types/techniques,
-  line type trading off stretch-forgiveness vs. sensitivity, heavier line
-  handling big fish but spooking line-shy species. None of this affects
-  `FishingController` yet -- there's no `ReelTypes.gd`/`LineTypes.gd`
-  data table, no snap-chance mechanic, no UI to equip any of it. The
-  fields just save/load harmlessly in the meantime.
 - **Polarized glasses / sight-fishing**: `GameManager.owns_polarized_
   glasses` exists as a field, but the actual mechanic (roll the candidate
   fish earlier, at the start of the wait rather than at hook-time; show a
