@@ -37,17 +37,25 @@ class_name FishingLocation
 ## top of the coin cost above. See GameManager.has_completed_region.
 @export var requires_complete_region: StringName = &""
 
-## Realistic water-depth range for this whole region, in feet -- each cast
-## rolls a fresh depth from this range (FishingController.cast), which
-## then interacts with the chosen lure's effective_depth_ft and each
-## fish's preferred_depth_ft. Deliberately NOT shared/global like weather:
-## where your line happens to land is inherently a per-cast thing, not
+## Realistic water-depth range for this whole region, in feet -- the
+## player picks a depth within this range (FishingController.set_depth,
+## further capped by the current boat tier), which then interacts with
+## the chosen lure's effective_depth_ft and each fish's
+## preferred_depth_ft. Deliberately NOT shared/global like weather:
+## where you choose to fish is inherently a personal thing, not
 ## something that needs the same cross-player sync weather does.
 @export var min_depth_ft: float = 1.0
 @export var max_depth_ft: float = 15.0
 
 ## "Waves" as a condition folds into weather (&"windy") rather than being
 ## a separate tracked axis -- one less moving part, same practical effect.
+
+## How much submerged structure (downed trees, brush, rock) this whole
+## region tends to have, as a flat multiplier on hard-lure snag risk (1.0
+## = baseline). There's no real per-spot structure map yet, so this is a
+## lake-wide proxy -- see FishingController._lure_loss_chance, which also
+## factors in how shallow/bank-adjacent the chosen depth is.
+@export var cover_density: float = 1.0
 
 ## Safe-band width (as a fraction of the tension bar) a brand-new arrival
 ## starts with vs. what full mastery of this region unlocks. 0.15 means

@@ -16,6 +16,7 @@ min_rod_tier_required = 0
 species = Array[Resource]([ExtResource("2"), ExtResource("3"), ExtResource("4")])
 min_depth_ft = 1.0
 max_depth_ft = 8.0
+cover_density = 0.8
 starting_safe_band_width = 0.15
 max_safe_band_width = 0.65
 mastery_levels = 4

@@ -18,8 +18,33 @@ class_name Lure
 @export var type: StringName = &"generic" # matched against Fish.preferred_lure_types
 @export var color: Color = Color.WHITE
 @export var size: StringName = &"medium" # &"small" / &"medium" / &"large" -- cosmetic/display only for now
-@export var cost: int = 0
 @export var icon: Texture2D
+
+## Soft/live bait (worm, dough ball) is consumed with some baseline
+## chance every cast, regardless of where you're fishing -- it falls
+## off/gets nibbled away even with no snag involved. Hard lures
+## (crankbait, jerkbait, spinner, topwater) are NOT consumed by normal
+## casting -- they're only lost outright to a snag/bite-off (see
+## snag_risk), which is why they're bought individually rather than in
+## a pack. See GameManager.owned_lure_counts / FishingController's
+## per-cast loss roll for how this is actually applied.
+@export var is_consumable: bool = false
+
+## How many units one purchase grants. 1 for hard lures (each purchase
+## is one physical lure); >1 for consumables bought in bulk (Ryan's
+## real-world pricing example: worms ~$5 for a pack of 20).
+@export var pack_size: int = 1
+@export var pack_cost: int = 0
+
+## Consumables only: per-cast chance of using up one unit, independent
+## of location/conditions -- bait just comes off sometimes.
+@export_range(0.0, 1.0) var base_loss_chance: float = 0.0
+
+## Hard lures only: baseline per-cast chance of a snag/bite-off costing
+## the lure outright, before FishingLocation.cover_density and depth
+## (shallower/bank-adjacent structure) scale it up or down -- see
+## FishingController._lure_loss_chance. 0 for consumables.
+@export_range(0.0, 1.0) var snag_risk: float = 0.0
 
 ## How this bait is fished -- decides which of FishingController's two
 ## sub-loops applies. &"bobber": a suspended/still bait (worm, dough
