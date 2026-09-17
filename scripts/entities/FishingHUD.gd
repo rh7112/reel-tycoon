@@ -194,6 +194,7 @@ func _refresh_region_visuals() -> void:
 		depth_fraction = clamp((controller.get_current_depth_ft() - loc.min_depth_ft) / (loc.max_depth_ft - loc.min_depth_ft), 0.0, 1.0)
 	%Background.color = loc.theme_color.darkened(depth_fraction * 0.4)
 	%Dock.tier = GameManager.boat_tier
+	%ReelWheel.reel_type = GameManager.equipped_reel_type
 
 ## Repositions the green safe-band highlight to match the current
 ## region's mastery-derived safe band -- it widens on upgrade, so this
