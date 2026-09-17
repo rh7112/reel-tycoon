@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="Fish" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/entities/Fish.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"bass"
+display_name = "Largemouth Bass"
+rarity = 1
+location_id = &"pond"
+base_coin_value = 6
+min_size_cm = 20.0
+max_size_cm = 45.0
+catch_weight = 3.0

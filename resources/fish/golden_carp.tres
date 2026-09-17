@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="Fish" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/entities/Fish.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"golden_carp"
+display_name = "Golden Carp"
+rarity = 2
+location_id = &"pond"
+base_coin_value = 25
+min_size_cm = 30.0
+max_size_cm = 60.0
+catch_weight = 0.5

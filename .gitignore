@@ -1,0 +1,15 @@
+# Godot 4+ local editor cache/import data -- regenerated automatically,
+# never worth committing.
+.godot/
+.import/
+export_presets.cfg
+
+# Common export output locations.
+builds/
+*.apk
+*.aab
+*.ipa
+
+# OS cruft.
+.DS_Store
+Thumbs.db

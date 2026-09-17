@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="FishingLocation" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/entities/FishingLocation.gd" id="1"]
+[ext_resource type="Resource" path="res://resources/fish/bluegill.tres" id="2"]
+[ext_resource type="Resource" path="res://resources/fish/bass.tres" id="3"]
+[ext_resource type="Resource" path="res://resources/fish/golden_carp.tres" id="4"]
+
+[resource]
+script = ExtResource("1")
+id = &"pond"
+display_name = "The Old Pond"
+unlock_cost = 0
+min_rod_tier_required = 0
+species = Array[Resource]([ExtResource("2"), ExtResource("3"), ExtResource("4")])
