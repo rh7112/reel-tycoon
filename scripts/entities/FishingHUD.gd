@@ -13,6 +13,16 @@ const BOBBER_WIGGLE_HOP_DURATION: float = 0.06 # seconds per jitter hop -- fast 
 const ROD_TIP: Vector2 = Vector2(410.0, 150.0) # where the fishing line visually starts
 const REEL_SPIN_SPEED: float = 6.0 # radians/sec while REELING
 
+## Non-uniform scale per sighting bucket (flattened, wider than tall --
+## reads as a shadow, not a ball) -- see FishingController.fish_sighted.
+const SHADOW_SCALE_BY_BUCKET: Dictionary = {
+	"small": Vector2(0.55, 0.3),
+	"medium": Vector2(0.9, 0.45),
+	"large": Vector2(1.3, 0.6),
+	"trophy": Vector2(1.9, 0.8),
+}
+const SHADOW_APPROACH_DISTANCE: float = 110.0 # how far out the shadow starts before swimming in
+
 @onready var controller: FishingController = get_parent()
 var _current_state: FishingController.State = FishingController.State.IDLE
 var _bob_tween: Tween
@@ -22,6 +32,7 @@ func _ready() -> void:
 	controller.tension_updated.connect(_on_tension_updated)
 	controller.catch_result.connect(_on_catch_result)
 	controller.fish_escaped.connect(_on_fish_escaped)
+	controller.fish_sighted.connect(_on_fish_sighted)
 	Economy.coins_changed.connect(_on_coins_changed)
 
 	%ActionButton.button_down.connect(_on_action_button_down)
@@ -71,6 +82,12 @@ func _on_state_changed(state: FishingController.State) -> void:
 	%ProgressTrack.visible = reel_ui_visible
 	%ProgressHint.visible = reel_ui_visible
 
+	# The sighting preview only means anything during the wait -- once
+	# the bite actually happens (or the cast ends some other way), the
+	# shadow either resolved into a real strike or the moment's passed.
+	if state != FishingController.State.WAITING_FOR_BITE:
+		%FishShadow.visible = false
+
 	match state:
 		FishingController.State.IDLE:
 			%StatusLabel.text = "Tap Cast to fish!"
@@ -117,6 +134,20 @@ func _on_tension_updated(tension: float, progress: float) -> void:
 	# animation reads as "pulling the fish toward shore" rather than a
 	# progress bar that happens to sit near an unrelated bobbing dot.
 	%Bobber.position.y = lerp(BOBBER_CAST_Y + BOBBER_SUBMERGE_DEPTH, BOBBER_REST_Y, progress)
+
+## Only fires for a player who owns polarized glasses -- see
+## FishingController.fish_sighted. Shows a shadow swimming in toward
+## the bobber from a random direction, sized by the bucket, so a
+## picky/small fish can be judged not worth going for before it bites.
+func _on_fish_sighted(size_bucket: String) -> void:
+	%FishShadow.scale = SHADOW_SCALE_BY_BUCKET.get(size_bucket, Vector2(0.9, 0.45))
+	var angle := randf_range(0.0, TAU)
+	var start_offset := Vector2(cos(angle), sin(angle)) * SHADOW_APPROACH_DISTANCE
+	%FishShadow.position = %Bobber.position + start_offset
+	%FishShadow.visible = true
+
+	var tween := create_tween()
+	tween.tween_property(%FishShadow, "position", %Bobber.position + Vector2(18.0, 10.0), FishingController.SIGHT_PREVIEW_SECONDS * 0.85).set_trans(Tween.TRANS_SINE)
 
 func _on_catch_result(fish: Fish, weight_lb: float, coins: int, rarity_tier: CardRarity.Tier) -> void:
 	var rarity_name := CardRarity.name_for_tier(rarity_tier)

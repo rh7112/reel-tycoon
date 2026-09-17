@@ -7,6 +7,7 @@ extends Control
 ## rows already depend on live game state.
 
 const LINE_WEIGHT_OPTIONS: Array[int] = [6, 10, 15, 20, 30]
+const POLARIZED_GLASSES_COST: int = 150
 
 var _content: VBoxContainer
 
@@ -37,6 +38,8 @@ func refresh() -> void:
 	)
 	_content.add_child(HSeparator.new())
 	_build_line_weight_section()
+	_content.add_child(HSeparator.new())
+	_build_polarized_glasses_section()
 
 func _build_rod_section() -> void:
 	var current: Dictionary = RodTiers.get_tier(GameManager.rod_tier)
@@ -131,3 +134,31 @@ func _build_line_weight_section() -> void:
 			refresh())
 		row.add_child(button)
 	_content.add_child(row)
+
+## One-time gear purchase -- see GameManager.owns_polarized_glasses and
+## FishingController.fish_sighted for what it actually does.
+func _build_polarized_glasses_section() -> void:
+	var header := Label.new()
+	header.add_theme_font_size_override("font_size", 24)
+	header.text = "Polarized Glasses"
+	_content.add_child(header)
+
+	if GameManager.owns_polarized_glasses:
+		var owned_label := Label.new()
+		owned_label.text = "Owned -- you'll see a fish's rough size before it bites."
+		_content.add_child(owned_label)
+		return
+
+	var info := Label.new()
+	info.text = "See a fish's rough size (never the exact weight) swim toward your bait before it bites -- worth knowing if a small one isn't worth setting the hook for."
+	_content.add_child(info)
+
+	var buy_button := Button.new()
+	buy_button.text = "Buy for %d coins" % POLARIZED_GLASSES_COST
+	buy_button.disabled = Economy.coins < POLARIZED_GLASSES_COST
+	buy_button.pressed.connect(func() -> void:
+		if Economy.spend_coins(POLARIZED_GLASSES_COST):
+			GameManager.owns_polarized_glasses = true
+			GameManager.save()
+			refresh())
+	_content.add_child(buy_button)

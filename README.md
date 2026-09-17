@@ -131,14 +131,15 @@ owned/equipped by default -- matches how most people actually start,
 and everything else (other reel types, every other lure) is something
 to unlock rather than a blank slate.
 
-### Data modeled but NOT wired into gameplay yet
-- **Polarized glasses / sight-fishing**: `GameManager.owns_polarized_
-  glasses` exists as a field, but the actual mechanic (roll the candidate
-  fish earlier, at the start of the wait rather than at hook-time; show a
-  size-bucketed shadow -- small/medium/large/trophy, never an exact
-  weight -- swimming toward the bobber shortly before the bite; let an
-  ignored bite double as "I let that one go") is designed but not built.
-  No `fish_sighted` signal, no shadow visual, no purchase UI yet.
+- **Polarized glasses / sight-fishing** (one-time purchase from the
+  "Gear" tab) -- the candidate catch is now rolled at the *start* of
+  the wait (`FishingController._start_waiting`), not at hook-time, so a
+  real preview is possible: shortly before the bite, `fish_sighted`
+  fires with a bucketed size impression (small/medium/large/trophy,
+  never the exact weight), and a drawn shadow (`FishShadowVisual.gd`)
+  swims toward the bobber. No new input needed -- the existing "miss
+  the window" timeout already means "I let that one go" once you can
+  see it wasn't worth it.
 
 ### Backlog
 Tracked as GitHub issues from here on rather than duplicated in this

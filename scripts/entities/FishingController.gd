@@ -37,6 +37,10 @@ const WRONG_DEPTH_LURE_MULTIPLIER: float = 0.05
 const MIN_WAIT_SECONDS: float = 4.0
 const MAX_WAIT_SECONDS: float = 18.0
 
+## How long before the bite the sighting preview fires, for players who
+## own polarized glasses -- see _process/get_current_style.
+const SIGHT_PREVIEW_SECONDS: float = 1.2
+
 @export var location: FishingLocation
 
 var _state: State = State.IDLE
@@ -46,6 +50,7 @@ var _wait_timer: float = 0.0
 var _bite_timer: float = 0.0
 var _pending_fish: Fish
 var _pending_weight_lb: float = 0.0
+var _sighted: bool = false
 var _current_depth_ft: float = 0.0
 var _holding_reel: bool = false
 
@@ -53,6 +58,11 @@ signal state_changed(new_state: State)
 signal tension_updated(tension: float, progress: float)
 signal catch_result(fish: Fish, weight_lb: float, coins_awarded: int, rarity_tier: CardRarity.Tier)
 signal fish_escaped()
+
+## Only fires for a player who owns polarized glasses -- a rough size
+## impression (never the exact weight) of what's about to bite, shortly
+## before it does. size_bucket is one of "small"/"medium"/"large"/"trophy".
+signal fish_sighted(size_bucket: String)
 
 func _ready() -> void:
 	# The scene's exported `location` is only the fresh-install default --
@@ -137,7 +147,18 @@ func get_current_style() -> StringName:
 	var lure: Lure = Lures.get_by_id(GameManager.equipped_lure)
 	return lure.presentation_style if lure != null else &"bobber"
 
+## Rolls the candidate catch now, at the start of the wait, rather than
+## at hook-time -- this is what lets polarized glasses show a real
+## preview of the actual fish that's about to bite (see _process),
+## instead of a fake placeholder rolled separately from the real one.
 func _start_waiting() -> void:
+	var candidate := _roll_candidate_catch()
+	if candidate.is_empty():
+		_set_state(State.IDLE)
+		return
+	_pending_fish = candidate.fish
+	_pending_weight_lb = candidate.weight_lb
+	_sighted = false
 	_set_state(State.WAITING_FOR_BITE)
 	_wait_timer = randf_range(MIN_WAIT_SECONDS, MAX_WAIT_SECONDS)
 
@@ -184,13 +205,14 @@ func _reel_in_early() -> void:
 	_pending_fish = null
 	_set_state(State.IDLE)
 
+## The candidate was already rolled back in _start_waiting -- this just
+## starts the reel mini-game against it. No re-roll: whatever the
+## player was shown (if they own polarized glasses) is exactly what's
+## on the line.
 func _start_reeling() -> void:
-	var candidate := _roll_candidate_catch()
-	if candidate.is_empty():
+	if _pending_fish == null:
 		_set_state(State.IDLE)
 		return
-	_pending_fish = candidate.fish
-	_pending_weight_lb = candidate.weight_lb
 	_tension = 0.5
 	_progress = 0.0
 	_set_state(State.REELING)
@@ -202,6 +224,9 @@ func _process(delta: float) -> void:
 			# retrieve style only counts down while actively held.
 			if get_current_style() == &"bobber" or _holding_reel:
 				_wait_timer -= delta
+				if not _sighted and GameManager.owns_polarized_glasses and _wait_timer <= SIGHT_PREVIEW_SECONDS:
+					_sighted = true
+					fish_sighted.emit(_size_bucket(_pending_fish, _pending_weight_lb))
 				if _wait_timer <= 0.0:
 					_start_bite_window()
 		State.BITE_WINDOW:
@@ -295,6 +320,19 @@ func _finish_reel(success: bool) -> void:
 	_set_state(State.RESULT)
 	await get_tree().create_timer(0.9).timeout
 	_set_state(State.IDLE)
+
+## Rough, non-numeric size impression for the sighting preview -- real
+## polarized glasses give an impression, not a readout, so this never
+## exposes the actual rolled weight or ratio to the player.
+func _size_bucket(fish: Fish, weight_lb: float) -> String:
+	var ratio := _weight_ratio(fish, weight_lb)
+	if ratio < 0.25:
+		return "small"
+	if ratio < 0.6:
+		return "medium"
+	if ratio < 0.85:
+		return "large"
+	return "trophy"
 
 ## 0..1 position within this species' own region-tuned weight range --
 ## the single number that drives both coin value AND card rarity (see

@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://scripts/entities/FishingController.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/entities/FishingHUD.gd" id="2"]
@@ -11,6 +11,7 @@
 [ext_resource type="Script" path="res://scripts/ui/LurePanel.gd" id="9"]
 [ext_resource type="Script" path="res://scripts/ui/RecordsPanel.gd" id="10"]
 [ext_resource type="Script" path="res://scripts/ui/LeaderboardPanel.gd" id="11"]
+[ext_resource type="Script" path="res://scripts/ui/FishShadowVisual.gd" id="12"]
 
 [node name="FishingScene" type="Control"]
 layout_mode = 3
@@ -54,6 +55,12 @@ default_color = Color(0.9, 0.9, 0.9, 0.8)
 unique_name_in_owner = true
 position = Vector2(650, 1150)
 script = ExtResource("5")
+
+[node name="FishShadow" type="Node2D" parent="."]
+unique_name_in_owner = true
+position = Vector2(390, 300)
+visible = false
+script = ExtResource("12")
 
 [node name="Bobber" type="Node2D" parent="."]
 unique_name_in_owner = true
