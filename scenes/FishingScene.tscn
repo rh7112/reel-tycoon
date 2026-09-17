@@ -1,9 +1,16 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://scripts/entities/FishingController.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/entities/FishingHUD.gd" id="2"]
 [ext_resource type="Resource" path="res://resources/locations/pond.tres" id="3"]
-[ext_resource type="Script" path="res://scripts/ui/ShopPanel.gd" id="4"]
+[ext_resource type="Script" path="res://scripts/ui/BobberVisual.gd" id="4"]
+[ext_resource type="Script" path="res://scripts/ui/ReelWheelVisual.gd" id="5"]
+[ext_resource type="Script" path="res://scripts/ui/MenuPanel.gd" id="6"]
+[ext_resource type="Script" path="res://scripts/ui/RodPanel.gd" id="7"]
+[ext_resource type="Script" path="res://scripts/ui/RegionPanel.gd" id="8"]
+[ext_resource type="Script" path="res://scripts/ui/LurePanel.gd" id="9"]
+[ext_resource type="Script" path="res://scripts/ui/RecordsPanel.gd" id="10"]
+[ext_resource type="Script" path="res://scripts/ui/LeaderboardPanel.gd" id="11"]
 
 [node name="FishingScene" type="Control"]
 layout_mode = 3
@@ -13,10 +20,45 @@ script = ExtResource("1")
 location = ExtResource("3")
 
 [node name="Background" type="ColorRect" parent="."]
+unique_name_in_owner = true
 layout_mode = 1
 anchor_right = 1.0
 anchor_bottom = 1.0
-color = Color(0.09, 0.29, 0.45, 1)
+color = Color(0.12, 0.35, 0.42, 1)
+
+[node name="SkyRect" type="ColorRect" parent="."]
+layout_mode = 0
+offset_right = 720.0
+offset_bottom = 380.0
+color = Color(0.65, 0.8, 0.92, 1)
+
+[node name="Shoreline" type="ColorRect" parent="."]
+layout_mode = 0
+offset_top = 380.0
+offset_right = 720.0
+offset_bottom = 392.0
+color = Color(0.76, 0.7, 0.5, 1)
+
+[node name="Rod" type="Line2D" parent="."]
+points = PackedVector2Array(650, 1230, 410, 150)
+width = 6.0
+default_color = Color(0.45, 0.3, 0.15, 1)
+
+[node name="FishingLine" type="Line2D" parent="."]
+unique_name_in_owner = true
+points = PackedVector2Array(410, 150, 390, 420)
+width = 2.0
+default_color = Color(0.9, 0.9, 0.9, 0.8)
+
+[node name="ReelWheel" type="Node2D" parent="."]
+unique_name_in_owner = true
+position = Vector2(650, 1150)
+script = ExtResource("5")
+
+[node name="Bobber" type="Node2D" parent="."]
+unique_name_in_owner = true
+position = Vector2(390, 420)
+script = ExtResource("4")
 
 [node name="CoinsLabel" type="Label" parent="."]
 unique_name_in_owner = true
@@ -28,7 +70,7 @@ offset_bottom = 74.0
 theme_override_font_sizes/font_size = 32
 text = "Coins: 0"
 
-[node name="ShopButton" type="Button" parent="."]
+[node name="MenuButton" type="Button" parent="."]
 unique_name_in_owner = true
 layout_mode = 0
 offset_left = 540.0
@@ -36,16 +78,17 @@ offset_top = 24.0
 offset_right = 696.0
 offset_bottom = 74.0
 theme_override_font_sizes/font_size = 22
-text = "Shop"
+text = "Menu"
 
-[node name="Bobber" type="ColorRect" parent="."]
+[node name="ConditionsLabel" type="Label" parent="."]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = 352.0
-offset_top = 420.0
-offset_right = 368.0
-offset_bottom = 436.0
-color = Color(1, 0.35, 0.25, 1)
+offset_left = 24.0
+offset_top = 80.0
+offset_right = 696.0
+offset_bottom = 112.0
+theme_override_font_sizes/font_size = 20
+text = ""
 
 [node name="StatusLabel" type="Label" parent="."]
 unique_name_in_owner = true
@@ -137,63 +180,108 @@ text = "Cast"
 [node name="HUD" type="Node" parent="."]
 script = ExtResource("2")
 
-[node name="ShopPanel" type="Control" parent="."]
+[node name="MenuPanel" type="Control" parent="."]
 unique_name_in_owner = true
 layout_mode = 1
 anchor_right = 1.0
 anchor_bottom = 1.0
-script = ExtResource("4")
+script = ExtResource("6")
 
-[node name="Backdrop" type="ColorRect" parent="ShopPanel"]
+[node name="Backdrop" type="ColorRect" parent="MenuPanel"]
 layout_mode = 1
 anchor_right = 1.0
 anchor_bottom = 1.0
 color = Color(0, 0, 0, 0.6)
 
-[node name="Panel" type="Panel" parent="ShopPanel"]
+[node name="Panel" type="Panel" parent="MenuPanel"]
 layout_mode = 0
-offset_left = 70.0
-offset_top = 380.0
-offset_right = 650.0
-offset_bottom = 800.0
+offset_left = 40.0
+offset_top = 140.0
+offset_right = 680.0
+offset_bottom = 1200.0
 
-[node name="ShopTitleLabel" type="Label" parent="ShopPanel/Panel"]
+[node name="TabBar" type="HBoxContainer" parent="MenuPanel/Panel"]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 630.0
+offset_bottom = 55.0
+
+[node name="RodTabButton" type="Button" parent="MenuPanel/Panel/TabBar"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Rod"
+
+[node name="RegionTabButton" type="Button" parent="MenuPanel/Panel/TabBar"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Region"
+
+[node name="LureTabButton" type="Button" parent="MenuPanel/Panel/TabBar"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Lures"
+
+[node name="RecordsTabButton" type="Button" parent="MenuPanel/Panel/TabBar"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Records"
+
+[node name="RanksTabButton" type="Button" parent="MenuPanel/Panel/TabBar"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Ranks"
+
+[node name="RodTab" type="Control" parent="MenuPanel/Panel"]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = 24.0
-offset_top = 20.0
-offset_right = 556.0
-offset_bottom = 60.0
-theme_override_font_sizes/font_size = 28
-text = "Current rod: Old Bamboo Rod"
+offset_left = 10.0
+offset_top = 65.0
+offset_right = 630.0
+offset_bottom = 990.0
+script = ExtResource("7")
 
-[node name="ShopInfoLabel" type="Label" parent="ShopPanel/Panel"]
+[node name="RegionTab" type="Control" parent="MenuPanel/Panel"]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = 24.0
-offset_top = 80.0
-offset_right = 556.0
-offset_bottom = 200.0
-theme_override_font_sizes/font_size = 22
-autowrap_mode = 2
-text = "Next: Fiberglass Rod"
+offset_left = 10.0
+offset_top = 65.0
+offset_right = 630.0
+offset_bottom = 990.0
+script = ExtResource("8")
 
-[node name="UpgradeButton" type="Button" parent="ShopPanel/Panel"]
+[node name="LureTab" type="Control" parent="MenuPanel/Panel"]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = 24.0
-offset_top = 250.0
-offset_right = 556.0
-offset_bottom = 320.0
-theme_override_font_sizes/font_size = 26
-text = "Upgrade for 50 coins"
+offset_left = 10.0
+offset_top = 65.0
+offset_right = 630.0
+offset_bottom = 990.0
+script = ExtResource("9")
 
-[node name="CloseShopButton" type="Button" parent="ShopPanel/Panel"]
+[node name="RecordsTab" type="Control" parent="MenuPanel/Panel"]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = 24.0
-offset_top = 340.0
-offset_right = 556.0
-offset_bottom = 400.0
-theme_override_font_sizes/font_size = 22
+offset_left = 10.0
+offset_top = 65.0
+offset_right = 630.0
+offset_bottom = 990.0
+script = ExtResource("10")
+
+[node name="RanksTab" type="Control" parent="MenuPanel/Panel"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 10.0
+offset_top = 65.0
+offset_right = 630.0
+offset_bottom = 990.0
+script = ExtResource("11")
+
+[node name="CloseMenuButton" type="Button" parent="MenuPanel/Panel"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 10.0
+offset_top = 1000.0
+offset_right = 630.0
+offset_bottom = 1050.0
 text = "Close"

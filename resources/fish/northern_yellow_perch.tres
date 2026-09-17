@@ -4,13 +4,13 @@
 
 [resource]
 script = ExtResource("1")
-id = &"bluegill"
-display_name = "Bluegill"
+id = &"northern_yellow_perch"
+display_name = "Yellow Perch"
 rarity = 0
-location_id = &"pond"
-base_coin_value = 2
-min_weight_lb = 0.15
+location_id = &"northern_lake"
+base_coin_value = 3
+min_weight_lb = 0.1
 max_weight_lb = 2.5
 size_skew = 4.0
-catch_weight = 6.0
+catch_weight = 7.0
 bite_affinity_strength = 0.1

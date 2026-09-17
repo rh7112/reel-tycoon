@@ -1,12 +1,15 @@
 extends Node
 
 ## Pure presentation layer -- everything it knows comes from
-## FishingController's signals or Economy's, so the core loop stays
-## testable/tunable without any UI node references baked into it.
+## FishingController's signals, Economy's, or a direct read of current
+## conditions, so the core loop stays testable/tunable without any of
+## this UI logic baked into it.
 
 const BOBBER_REST_Y: float = 420.0 # at the "shore" -- resting position when idle
 const BOBBER_CAST_Y: float = 180.0 # out in the "water" -- resting position while a line is out
 const BOBBER_BITE_DIP: float = 40.0 # extra downward jerk when a fish bites
+const ROD_TIP: Vector2 = Vector2(410.0, 150.0) # where the fishing line visually starts
+const REEL_SPIN_SPEED: float = 6.0 # radians/sec while REELING
 
 @onready var controller: FishingController = get_parent()
 var _current_state: FishingController.State = FishingController.State.IDLE
@@ -21,12 +24,23 @@ func _ready() -> void:
 
 	%ActionButton.button_down.connect(_on_action_button_down)
 	%ActionButton.button_up.connect(_on_action_button_up)
-	%ShopButton.pressed.connect(%ShopPanel.open)
+	%MenuButton.pressed.connect(%MenuPanel.open)
+	%CloseMenuButton.pressed.connect(_refresh_region_visuals)
 
 	_on_coins_changed(Economy.coins)
 	_on_state_changed(controller.get_state())
 	%ProgressFillBar.size.x = 0.0
 	%Bobber.position.y = BOBBER_REST_Y
+	_refresh_region_visuals()
+
+func _process(delta: float) -> void:
+	# The line always tracks the bobber's live position, however it's
+	# currently being moved (tween or direct set) -- one place, no
+	# coupling to which mechanism is animating the bobber right now.
+	%FishingLine.points = PackedVector2Array([ROD_TIP, %Bobber.position])
+
+	if _current_state == FishingController.State.REELING:
+		%ReelWheel.rotation += REEL_SPIN_SPEED * delta
 
 func _on_action_button_down() -> void:
 	match _current_state:
@@ -53,6 +67,7 @@ func _on_state_changed(state: FishingController.State) -> void:
 		FishingController.State.WAITING_FOR_BITE:
 			%StatusLabel.text = "Waiting for a bite..."
 			_start_idle_bob()
+			_update_conditions_label()
 		FishingController.State.BITE_WINDOW:
 			%StatusLabel.text = "BITE! Tap now!"
 			%ActionButton.text = "Hook it!"
@@ -78,9 +93,10 @@ func _on_tension_updated(tension: float, progress: float) -> void:
 	# progress bar that happens to sit near an unrelated bobbing dot.
 	%Bobber.position.y = lerp(BOBBER_CAST_Y + BOBBER_BITE_DIP, BOBBER_REST_Y, progress)
 
-func _on_catch_result(fish: Fish, size_cm: float, coins: int) -> void:
-	%StatusLabel.text = "Caught a %.0fcm %s! +%d coins" % [size_cm, fish.display_name, coins]
-	_spawn_coin_popup(coins)
+func _on_catch_result(fish: Fish, weight_lb: float, coins: int, rarity_tier: Rarity.Tier) -> void:
+	var rarity_name := Rarity.name_for_tier(rarity_tier)
+	%StatusLabel.text = "%s! %.1flb %s -- +%d coins" % [rarity_name, weight_lb, fish.display_name, coins]
+	_spawn_coin_popup(coins, Rarity.color_for_tier(rarity_tier))
 
 func _on_fish_escaped() -> void:
 	%StatusLabel.text = "It got away!"
@@ -88,9 +104,27 @@ func _on_fish_escaped() -> void:
 func _on_coins_changed(amount: int) -> void:
 	%CoinsLabel.text = "Coins: %d" % amount
 
-## Repositions the green safe-band highlight to match the current rod
-## tier's actual safe band -- it widens on upgrade, so this can't stay
-## the static rect the scene was authored with.
+## Shows current weather + this cast's rolled depth -- without this, the
+## whole weather/lure/depth bite-affinity system is invisible and
+## unlearnable to the player.
+func _update_conditions_label() -> void:
+	if controller.location == null:
+		return
+	var weather_id := WeatherService.get_weather(controller.location.id)
+	var depth_ft := controller.get_current_depth_ft()
+	%ConditionsLabel.text = "%s -- %dft deep" % [Weather.display_name(weather_id), int(depth_ft)]
+
+## Re-syncs the water tint and conditions label to whatever region we're
+## actually in -- called after the menu closes, since traveling is the
+## only way that can have changed mid-session.
+func _refresh_region_visuals() -> void:
+	if controller.location == null:
+		return
+	%Background.color = controller.location.theme_color
+
+## Repositions the green safe-band highlight to match the current
+## region's mastery-derived safe band -- it widens on upgrade, so this
+## can't stay the static rect the scene was authored with.
 func _position_safe_band() -> void:
 	var band: Vector2 = controller.get_safe_band()
 	var track_width: float = %TensionTrack.size.x
@@ -116,11 +150,11 @@ func _kill_bob_tween() -> void:
 ## Simple "+N" popup that floats up and fades -- the kind of cheap juice
 ## that makes a currency gain actually feel like a reward instead of a
 ## number quietly changing in the corner.
-func _spawn_coin_popup(coins: int) -> void:
+func _spawn_coin_popup(coins: int, color: Color = Color(1.0, 0.85, 0.2)) -> void:
 	var popup := Label.new()
 	popup.text = "+%d" % coins
 	popup.add_theme_font_size_override("font_size", 40)
-	popup.add_theme_color_override("font_color", Color(1.0, 0.85, 0.2))
+	popup.add_theme_color_override("font_color", color)
 	popup.position = Vector2(300.0, 100.0)
 	controller.add_child(popup)
 

@@ -25,6 +25,8 @@ config/icon="res://icon.svg"
 Economy="*res://scripts/autoload/Economy.gd"
 SaveManager="*res://scripts/autoload/SaveManager.gd"
 GameManager="*res://scripts/autoload/GameManager.gd"
+WeatherService="*res://scripts/autoload/WeatherService.gd"
+LeaderboardService="*res://scripts/autoload/LeaderboardService.gd"
 
 [display]
 

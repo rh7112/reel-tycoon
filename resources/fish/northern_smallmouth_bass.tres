@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="Fish" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/entities/Fish.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/entities/FishSizeClass.gd" id="2"]
+
+[sub_resource type="Resource" id="SizeClass_Average"]
+script = ExtResource("2")
+min_weight_lb = 0.0
+max_weight_lb = 4.0
+bite_affinity_strength = 0.15
+
+[sub_resource type="Resource" id="SizeClass_Trophy"]
+script = ExtResource("2")
+min_weight_lb = 4.0
+max_weight_lb = 7.0
+preferred_weather = Array[StringName]([&"windy"])
+preferred_lure_types = Array[StringName]([&"jerkbait"])
+preferred_depth_ft = Vector2(7.0, 13.0)
+bite_affinity_strength = 0.75
+
+[resource]
+script = ExtResource("1")
+id = &"northern_smallmouth_bass"
+display_name = "Smallmouth Bass"
+rarity = 1
+location_id = &"northern_lake"
+base_coin_value = 9
+min_weight_lb = 0.4
+max_weight_lb = 7.0
+size_skew = 5.0
+catch_weight = 2.5
+size_classes = Array[Resource]([SubResource("SizeClass_Average"), SubResource("SizeClass_Trophy")])

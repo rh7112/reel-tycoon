@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="Fish" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/entities/Fish.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"kentucky_channel_catfish"
+display_name = "Channel Catfish"
+rarity = 2
+location_id = &"kentucky_lake"
+base_coin_value = 15
+min_weight_lb = 1.0
+max_weight_lb = 25.0
+size_skew = 6.0
+catch_weight = 1.8
+preferred_weather = Array[StringName]([&"cloudy", &"rainy"])
+preferred_lure_types = Array[StringName]([&"worm"])
+preferred_depth_ft = Vector2(8.0, 25.0)
+bite_affinity_strength = 0.35

@@ -4,13 +4,13 @@
 
 [resource]
 script = ExtResource("1")
-id = &"bluegill"
-display_name = "Bluegill"
+id = &"kentucky_white_bass"
+display_name = "White Bass"
 rarity = 0
-location_id = &"pond"
-base_coin_value = 2
-min_weight_lb = 0.15
-max_weight_lb = 2.5
+location_id = &"kentucky_lake"
+base_coin_value = 4
+min_weight_lb = 0.3
+max_weight_lb = 5.0
 size_skew = 4.0
 catch_weight = 6.0
-bite_affinity_strength = 0.1
+bite_affinity_strength = 0.15

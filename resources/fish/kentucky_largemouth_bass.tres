@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="Fish" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/entities/Fish.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"kentucky_largemouth_bass"
+display_name = "Largemouth Bass"
+rarity = 1
+location_id = &"kentucky_lake"
+base_coin_value = 10
+min_weight_lb = 0.5
+max_weight_lb = 14.0
+size_skew = 5.5
+catch_weight = 3.0
+preferred_weather = Array[StringName]([&"cloudy", &"rainy"])
+preferred_lure_types = Array[StringName]([&"crankbait", &"jerkbait"])
+bite_affinity_strength = 0.4

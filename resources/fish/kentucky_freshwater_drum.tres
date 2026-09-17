@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="Fish" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/entities/Fish.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"kentucky_freshwater_drum"
+display_name = "Freshwater Drum"
+rarity = 2
+location_id = &"kentucky_lake"
+base_coin_value = 12
+min_weight_lb = 1.0
+max_weight_lb = 20.0
+size_skew = 6.0
+catch_weight = 2.0
+preferred_lure_types = Array[StringName]([&"worm"])
+preferred_depth_ft = Vector2(10.0, 25.0)
+bite_affinity_strength = 0.4

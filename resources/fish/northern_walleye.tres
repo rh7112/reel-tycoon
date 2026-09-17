@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="Fish" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/entities/Fish.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"northern_walleye"
+display_name = "Walleye"
+rarity = 2
+location_id = &"northern_lake"
+base_coin_value = 14
+min_weight_lb = 1.0
+max_weight_lb = 13.0
+size_skew = 5.5
+catch_weight = 1.5
+preferred_weather = Array[StringName]([&"cloudy", &"rainy"])
+preferred_depth_ft = Vector2(6.0, 20.0)
+bite_affinity_strength = 0.35

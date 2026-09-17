@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="Lure" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/entities/Lure.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"hopper_topwater"
+display_name = "Ol' Hopper Topwater"
+type = &"frog"
+color = Color(0.25, 0.55, 0.2, 1)
+size = &"medium"
+cost = 40
+effective_depth_ft = Vector2(0.0, 3.0)

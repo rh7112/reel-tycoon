@@ -2,6 +2,9 @@ class_name RodTiers
 extends RefCounted
 
 ## Rod upgrade tiers -- the first thing coins are actually spendable on.
+## Controls reel *rates* only now -- safe-band *width* moved to per-region
+## mastery (FishingLocation.gd), since that's the axis that's supposed to
+## reset when arriving somewhere new while gear stays permanent.
 ##
 ## Kept as a plain const table here rather than a Resource-per-tier like
 ## Fish/FishingLocation: those are content meant to grow to dozens of
@@ -15,7 +18,6 @@ const TIERS: Array[Dictionary] = [
 	{
 		"name": "Old Bamboo Rod",
 		"upgrade_cost": 0,
-		"safe_band": Vector2(0.35, 0.75),
 		"tension_rise_rate": 0.9,
 		"tension_fall_rate": 0.6,
 		"progress_fill_rate": 0.35,
@@ -24,7 +26,6 @@ const TIERS: Array[Dictionary] = [
 	{
 		"name": "Fiberglass Rod",
 		"upgrade_cost": 50,
-		"safe_band": Vector2(0.30, 0.80),
 		"tension_rise_rate": 0.85,
 		"tension_fall_rate": 0.55,
 		"progress_fill_rate": 0.40,
@@ -33,7 +34,6 @@ const TIERS: Array[Dictionary] = [
 	{
 		"name": "Carbon Rod",
 		"upgrade_cost": 200,
-		"safe_band": Vector2(0.25, 0.85),
 		"tension_rise_rate": 0.8,
 		"tension_fall_rate": 0.5,
 		"progress_fill_rate": 0.45,
@@ -42,7 +42,6 @@ const TIERS: Array[Dictionary] = [
 	{
 		"name": "Pro Tournament Rod",
 		"upgrade_cost": 750,
-		"safe_band": Vector2(0.2, 0.9),
 		"tension_rise_rate": 0.75,
 		"tension_fall_rate": 0.45,
 		"progress_fill_rate": 0.5,

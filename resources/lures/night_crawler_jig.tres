@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="Lure" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/entities/Lure.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"night_crawler_jig"
+display_name = "Night Crawler Jig"
+type = &"worm"
+color = Color(0.4, 0.25, 0.15, 1)
+size = &"small"
+cost = 15
+effective_depth_ft = Vector2(0.0, 20.0)

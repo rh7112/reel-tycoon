@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="Lure" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/entities/Lure.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"suspending_jerkbait"
+display_name = "Suspending Jerkbait"
+type = &"jerkbait"
+color = Color(0.7, 0.75, 0.8, 1)
+size = &"medium"
+cost = 45
+effective_depth_ft = Vector2(4.0, 12.0)

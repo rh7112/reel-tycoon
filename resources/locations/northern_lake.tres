@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="FishingLocation" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/entities/FishingLocation.gd" id="1"]
+[ext_resource type="Resource" path="res://resources/fish/northern_largemouth_bass.tres" id="2"]
+[ext_resource type="Resource" path="res://resources/fish/northern_smallmouth_bass.tres" id="3"]
+[ext_resource type="Resource" path="res://resources/fish/northern_walleye.tres" id="4"]
+[ext_resource type="Resource" path="res://resources/fish/northern_yellow_perch.tres" id="5"]
+
+[resource]
+script = ExtResource("1")
+id = &"northern_lake"
+display_name = "Lake Monroe"
+order = 1
+theme_color = Color(0.08, 0.22, 0.32, 1)
+unlock_cost = 300
+min_rod_tier_required = 1
+species = Array[Resource]([ExtResource("2"), ExtResource("3"), ExtResource("4"), ExtResource("5")])
+min_depth_ft = 2.0
+max_depth_ft = 22.0
+latitude = 39.08
+longitude = -86.40
+requires_complete_region = &"pond"
+starting_safe_band_width = 0.15
+max_safe_band_width = 0.6
+mastery_levels = 5
+mastery_base_cost = 40
+mastery_cost_growth = 1.55

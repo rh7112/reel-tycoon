@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="FishingLocation" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/entities/FishingLocation.gd" id="1"]
+[ext_resource type="Resource" path="res://resources/fish/kentucky_largemouth_bass.tres" id="2"]
+[ext_resource type="Resource" path="res://resources/fish/kentucky_white_bass.tres" id="3"]
+[ext_resource type="Resource" path="res://resources/fish/kentucky_freshwater_drum.tres" id="4"]
+[ext_resource type="Resource" path="res://resources/fish/kentucky_channel_catfish.tres" id="5"]
+
+[resource]
+script = ExtResource("1")
+id = &"kentucky_lake"
+display_name = "Kentucky Lake"
+order = 2
+theme_color = Color(0.1, 0.28, 0.24, 1)
+unlock_cost = 1200
+min_rod_tier_required = 2
+species = Array[Resource]([ExtResource("2"), ExtResource("3"), ExtResource("4"), ExtResource("5")])
+min_depth_ft = 3.0
+max_depth_ft = 28.0
+latitude = 36.95
+longitude = -88.05
+requires_complete_region = &"northern_lake"
+starting_safe_band_width = 0.15
+max_safe_band_width = 0.55
+mastery_levels = 5
+mastery_base_cost = 80
+mastery_cost_growth = 1.55
