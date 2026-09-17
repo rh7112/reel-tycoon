@@ -3,7 +3,7 @@ extends Control
 ## "Records" tab -- the card binder. Every catch produces a card at
 ## whatever rarity tier its rolled weight lands in (GameManager.cards);
 ## this groups them by species and lists each rarity tier owned, with
-## count and best weight at that tier, color-coded by Rarity.gd.
+## count and best weight at that tier, color-coded by CardRarity.gd.
 
 var _list: VBoxContainer
 
@@ -54,8 +54,8 @@ func _build_species_block(_species_id: String, species_cards: Array) -> Control:
 	species_cards.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return a.rarity_tier < b.rarity_tier)
 	for card in species_cards:
 		var row := Label.new()
-		row.add_theme_color_override("font_color", Rarity.color_for_tier(card.rarity_tier))
-		row.text = "  %s x%d -- best %.1flb" % [Rarity.name_for_tier(card.rarity_tier), card.count, card.best_weight_lb]
+		row.add_theme_color_override("font_color", CardRarity.color_for_tier(card.rarity_tier))
+		row.text = "  %s x%d -- best %.1flb" % [CardRarity.name_for_tier(card.rarity_tier), card.count, card.best_weight_lb]
 		block.add_child(row)
 
 	block.add_child(HSeparator.new())

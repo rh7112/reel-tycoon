@@ -1,4 +1,4 @@
-class_name Rarity
+class_name CardRarity
 extends RefCounted
 
 ## Card rarity, derived from a catch's percentile within that SPECIFIC
@@ -9,6 +9,14 @@ extends RefCounted
 ## catch for this water" -- even though the raw weights differ a lot.
 ## This is what makes card rarity comparable across regions with wildly
 ## different real-world size records.
+##
+## Named CardRarity, not Rarity, specifically to avoid colliding with
+## Fish.gd's own nested `enum Rarity` (species-level "how rare is this
+## species to encounter at all", a completely different, older concept)
+## -- a global class_name and a nested enum sharing a bare name is a real
+## Godot parser error, not just a style nit (confirmed live: "Cannot
+## assign a value of type Fish.Rarity to variable ... with specified
+## type Rarity").
 
 enum Tier { COMMON, UNCOMMON, RARE, EPIC, LEGENDARY }
 

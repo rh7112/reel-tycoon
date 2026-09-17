@@ -45,7 +45,7 @@ var _holding_reel: bool = false
 
 signal state_changed(new_state: State)
 signal tension_updated(tension: float, progress: float)
-signal catch_result(fish: Fish, weight_lb: float, coins_awarded: int, rarity_tier: Rarity.Tier)
+signal catch_result(fish: Fish, weight_lb: float, coins_awarded: int, rarity_tier: CardRarity.Tier)
 signal fish_escaped()
 
 func _ready() -> void:
@@ -189,7 +189,7 @@ func _finish_reel(success: bool) -> void:
 	if success:
 		var ratio := _weight_ratio(_pending_fish, _pending_weight_lb)
 		var coins := _award_catch(_pending_fish, ratio)
-		var tier := Rarity.tier_for_ratio(ratio)
+		var tier := CardRarity.tier_for_ratio(ratio)
 		GameManager.record_catch(_pending_fish, _pending_weight_lb)
 		GameManager.record_card(_pending_fish, _pending_weight_lb, ratio)
 		catch_result.emit(_pending_fish, _pending_weight_lb, coins, tier)
@@ -202,7 +202,7 @@ func _finish_reel(success: bool) -> void:
 
 ## 0..1 position within this species' own region-tuned weight range --
 ## the single number that drives both coin value AND card rarity (see
-## Rarity.gd), so a catch's reward and its rarity always agree with each
+## CardRarity.gd), so a catch's reward and its rarity always agree with each
 ## other about how good a catch it was.
 func _weight_ratio(fish: Fish, weight_lb: float) -> float:
 	if fish.max_weight_lb <= fish.min_weight_lb:

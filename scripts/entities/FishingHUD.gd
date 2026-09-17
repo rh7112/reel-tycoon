@@ -93,10 +93,10 @@ func _on_tension_updated(tension: float, progress: float) -> void:
 	# progress bar that happens to sit near an unrelated bobbing dot.
 	%Bobber.position.y = lerp(BOBBER_CAST_Y + BOBBER_BITE_DIP, BOBBER_REST_Y, progress)
 
-func _on_catch_result(fish: Fish, weight_lb: float, coins: int, rarity_tier: Rarity.Tier) -> void:
-	var rarity_name := Rarity.name_for_tier(rarity_tier)
+func _on_catch_result(fish: Fish, weight_lb: float, coins: int, rarity_tier: CardRarity.Tier) -> void:
+	var rarity_name := CardRarity.name_for_tier(rarity_tier)
 	%StatusLabel.text = "%s! %.1flb %s -- +%d coins" % [rarity_name, weight_lb, fish.display_name, coins]
-	_spawn_coin_popup(coins, Rarity.color_for_tier(rarity_tier))
+	_spawn_coin_popup(coins, CardRarity.color_for_tier(rarity_tier))
 
 func _on_fish_escaped() -> void:
 	%StatusLabel.text = "It got away!"

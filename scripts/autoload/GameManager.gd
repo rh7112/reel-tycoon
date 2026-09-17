@@ -50,7 +50,7 @@ var fish_records: Dictionary = {}
 ## "{species_id}:{rarity_tier}" -> {species_id, region_id, display_name,
 ## rarity_tier, count, best_weight_lb}. The actual collection/binder --
 ## every catch produces a card at whatever rarity its rolled weight
-## lands in (see Rarity.gd), and duplicates at the same species+tier just
+## lands in (see CardRarity.gd), and duplicates at the same species+tier just
 ## increment count. This is also what gates a region's "complete the set"
 ## unlock requirement -- see has_completed_region.
 var cards: Dictionary = {}
@@ -91,7 +91,7 @@ func record_catch(fish: Fish, weight_lb: float) -> void:
 ## same 0..1 value used to determine the catch's coin value, so a card's
 ## rarity always matches what the player actually experienced.
 func record_card(fish: Fish, weight_lb: float, weight_ratio: float) -> void:
-	var tier: Rarity.Tier = Rarity.tier_for_ratio(weight_ratio)
+	var tier: CardRarity.Tier = CardRarity.tier_for_ratio(weight_ratio)
 	var key := "%s:%d" % [fish.id, tier]
 	var card: Dictionary = cards.get(key, {})
 	if card.is_empty():

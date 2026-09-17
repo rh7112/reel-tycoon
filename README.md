@@ -23,7 +23,7 @@ three, where each answers a different question a player has:
   set" gate -- one mechanic, not three separate systems bolted together.
 
 Card rarity is a **percentile within that specific region-scoped fish's
-own realistic weight range** (`Rarity.gd`), not a fixed lb scale -- a
+own realistic weight range** (`CardRarity.gd`), not a fixed lb scale -- a
 Northern largemouth's Legendary (top of a ~12lb regional ceiling) and a
 big-Southern-lake largemouth's Legendary (top of a much higher ceiling)
 both mean "an exceptional catch for this water," even though the raw
@@ -134,6 +134,17 @@ correct but unverified by an actual compile:
 If any of these turn out to be wrong, the fix is usually small and
 localized (once Godot's error message says which line) -- flagging them
 so a first-load error isn't a surprise.
+
+**Already found and fixed one, live**: a global `class_name` and a
+nested `enum` of the same bare name collide in GDScript -- the new card
+rarity system was originally also named `Rarity`, which shadowed
+`Fish.gd`'s own pre-existing `enum Rarity` (species-level "how rare is
+this species to encounter," a different, older concept) every time
+`Fish.gd` wrote `Rarity.COMMON`. Renamed the new one to `CardRarity`
+throughout. If Godot ever reports "Cannot assign a value of type X.Y to
+variable ... with specified type Y" again, this exact collision pattern
+(a global class name stealing a nested enum's bare name inside its own
+class) is the first thing to check.
 
 ## Running it
 
