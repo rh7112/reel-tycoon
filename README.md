@@ -134,6 +134,8 @@ exactly what to check first if something doesn't load.
   whichever is smaller wins. Drawn per-tier (`DockVisual.gd`, actually
   redraws on tier change, unlike the static Bobber/ReelWheel visuals),
   positioned at the shoreline.
+- Sponsorships (`SponsorshipTiers.gd`) -- another straight upgrade
+  ladder, multiplies coins earned per catch (`FishingController._award_catch`).
 - Placeholder visuals with no real art yet: a two-tone drawn bobber, a
   static rod + dynamic fishing line (`Line2D`), a reel wheel that spins
   while reeling, a simple sky/water/shoreline backdrop tinted per region.

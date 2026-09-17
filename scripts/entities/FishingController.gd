@@ -361,9 +361,10 @@ func _weight_ratio(fish: Fish, weight_lb: float) -> float:
 
 ## Coins scale continuously with rolled weight within the species' region
 ## range, so even a common species stays worth chasing if a bigger one
-## shows up.
+## shows up. Sponsorship (SponsorshipTiers.gd) multiplies the total.
 func _award_catch(fish: Fish, weight_ratio: float) -> int:
-	var coins := int(round(fish.base_coin_value * (1.0 + weight_ratio)))
+	var coin_mult: float = SponsorshipTiers.get_tier(GameManager.sponsorship_tier).coin_mult
+	var coins := int(round(fish.base_coin_value * (1.0 + weight_ratio) * coin_mult))
 	Economy.add_coins(coins)
 	return coins
 
