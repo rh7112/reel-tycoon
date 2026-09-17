@@ -75,7 +75,7 @@ func _ready() -> void:
 		# than waiting for the first bite roll to need it. A cast takes a
 		# few seconds anyway, usually enough for the request to land first.
 		WeatherService.prime(location.id)
-		_current_depth_ft = (location.min_depth_ft + location.max_depth_ft) * 0.5
+		_current_depth_ft = _default_depth_ft()
 	_set_state(State.IDLE)
 
 func get_state() -> State:
@@ -88,11 +88,27 @@ func get_state() -> State:
 func get_current_depth_ft() -> float:
 	return _current_depth_ft
 
-## Called by the depth control in the HUD. Clamped to this region's real
-## range -- there's no fishing "deeper than the lake actually gets".
+## The deepest the player can currently fish this region -- whichever is
+## smaller of the region's own real range and the current boat tier's
+## cap (BoatTiers.gd). A rickety dock keeps you in the shallows even on
+## a lake that goes much deeper than that.
+func get_max_reachable_depth_ft() -> float:
+	if location == null:
+		return 999.0
+	var boat_cap: float = BoatTiers.get_tier(GameManager.boat_tier).max_depth_ft
+	return min(location.max_depth_ft, boat_cap)
+
+func _default_depth_ft() -> float:
+	if location == null:
+		return 5.0
+	return (location.min_depth_ft + get_max_reachable_depth_ft()) * 0.5
+
+## Called by the depth control in the HUD. Clamped to whatever's
+## actually reachable right now -- there's no fishing deeper than the
+## lake gets, or deeper than the current boat can take you.
 func set_depth(depth_ft: float) -> void:
 	if location != null:
-		_current_depth_ft = clamp(depth_ft, location.min_depth_ft, location.max_depth_ft)
+		_current_depth_ft = clamp(depth_ft, location.min_depth_ft, get_max_reachable_depth_ft())
 	else:
 		_current_depth_ft = depth_ft
 
@@ -103,7 +119,7 @@ func set_depth(depth_ft: float) -> void:
 func set_location(new_location: FishingLocation) -> void:
 	location = new_location
 	WeatherService.prime(new_location.id)
-	_current_depth_ft = (new_location.min_depth_ft + new_location.max_depth_ft) * 0.5
+	_current_depth_ft = _default_depth_ft()
 	_pending_fish = null
 	_holding_reel = false
 	_set_state(State.IDLE)

@@ -16,6 +16,11 @@ var rod_tier: int = 0
 var unlocked_locations: Array[StringName] = [&"pond"]
 var current_location: StringName = &"pond"
 
+## What the player fishes from -- see BoatTiers.gd. Caps how deep they
+## can set the depth stepper to, separately from (and combined with,
+## whichever is smaller) each region's own real depth range.
+var boat_tier: int = 0
+
 ## Region id -> mastery level (int). Missing key == level 0 (the region's
 ## own starting_safe_band_width). See FishingLocation.gd for why this is
 ## deliberately separate from rod_tier.
@@ -194,6 +199,7 @@ func save() -> void:
 	var data := {
 		"economy": Economy.to_save_dict(),
 		"rod_tier": rod_tier,
+		"boat_tier": boat_tier,
 		"unlocked_locations": unlocked_locations,
 		"current_location": String(current_location),
 		"region_mastery": region_mastery,
@@ -218,6 +224,7 @@ func _load() -> void:
 		return
 	Economy.load_from_dict(data.get("economy", {}))
 	rod_tier = data.get("rod_tier", 0)
+	boat_tier = data.get("boat_tier", 0)
 	unlocked_locations.assign(data.get("unlocked_locations", [&"pond"]))
 	current_location = StringName(data.get("current_location", "pond"))
 	region_mastery = data.get("region_mastery", {})

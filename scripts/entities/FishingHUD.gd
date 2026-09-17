@@ -28,6 +28,8 @@ var _current_state: FishingController.State = FishingController.State.IDLE
 var _bob_tween: Tween
 
 func _ready() -> void:
+	controller.theme = GameTheme.build()
+
 	controller.state_changed.connect(_on_state_changed)
 	controller.tension_updated.connect(_on_tension_updated)
 	controller.catch_result.connect(_on_catch_result)
@@ -191,6 +193,7 @@ func _refresh_region_visuals() -> void:
 	if loc.max_depth_ft > loc.min_depth_ft:
 		depth_fraction = clamp((controller.get_current_depth_ft() - loc.min_depth_ft) / (loc.max_depth_ft - loc.min_depth_ft), 0.0, 1.0)
 	%Background.color = loc.theme_color.darkened(depth_fraction * 0.4)
+	%Dock.tier = GameManager.boat_tier
 
 ## Repositions the green safe-band highlight to match the current
 ## region's mastery-derived safe band -- it widens on upgrade, so this

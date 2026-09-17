@@ -27,6 +27,8 @@ func refresh() -> void:
 
 	_build_rod_section()
 	_content.add_child(HSeparator.new())
+	_build_boat_section()
+	_content.add_child(HSeparator.new())
 	_build_owned_option_section(
 		"Reel", ReelTypes.ALL, GameManager.owned_reel_types, GameManager.equipped_reel_type,
 		GameManager.buy_reel_type, GameManager.equip_reel_type
@@ -65,6 +67,45 @@ func _build_rod_section() -> void:
 	upgrade_button.pressed.connect(func() -> void:
 		if Economy.spend_coins(next.upgrade_cost):
 			GameManager.rod_tier += 1
+			GameManager.save()
+			refresh())
+	_content.add_child(upgrade_button)
+
+## Boats are a linear upgrade ladder (unlike reel/line/lures below,
+## which are tradeoff options) -- a bigger boat is genuinely just
+## strictly better, gating how deep the player can set the depth
+## stepper to (see BoatTiers.gd, FishingController.get_max_reachable_depth_ft).
+func _build_boat_section() -> void:
+	var current: Dictionary = BoatTiers.get_tier(GameManager.boat_tier)
+	var title := Label.new()
+	title.add_theme_font_size_override("font_size", 26)
+	title.text = "Current boat: %s" % current.name
+	_content.add_child(title)
+
+	var region: FishingLocation = Regions.get_by_id(GameManager.current_location)
+	if region != null:
+		var depth_info := Label.new()
+		var cap: float = min(region.max_depth_ft, float(current.max_depth_ft))
+		depth_info.text = "Reaches %dft of %s's %dft" % [int(cap), region.display_name, int(region.max_depth_ft)]
+		_content.add_child(depth_info)
+
+	if BoatTiers.is_max_tier(GameManager.boat_tier):
+		var maxed := Label.new()
+		maxed.text = "Nothing bigger out there -- for now."
+		_content.add_child(maxed)
+		return
+
+	var next: Dictionary = BoatTiers.get_tier(GameManager.boat_tier + 1)
+	var info := Label.new()
+	info.text = "Next: %s -- reaches deeper water, where bigger fish can be." % next.name
+	_content.add_child(info)
+
+	var upgrade_button := Button.new()
+	upgrade_button.text = "Upgrade for %d coins" % next.cost
+	upgrade_button.disabled = Economy.coins < next.cost
+	upgrade_button.pressed.connect(func() -> void:
+		if Economy.spend_coins(next.cost):
+			GameManager.boat_tier += 1
 			GameManager.save()
 			refresh())
 	_content.add_child(upgrade_button)
