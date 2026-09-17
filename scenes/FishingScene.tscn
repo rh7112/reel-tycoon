@@ -130,6 +130,7 @@ offset_bottom = 60.0
 color = Color(1, 1, 1, 1)
 
 [node name="TensionHint" type="Label" parent="."]
+unique_name_in_owner = true
 layout_mode = 0
 offset_left = 60.0
 offset_top = 584.0
@@ -158,6 +159,7 @@ offset_bottom = 40.0
 color = Color(0.95, 0.7, 0.15, 1)
 
 [node name="ProgressHint" type="Label" parent="."]
+unique_name_in_owner = true
 layout_mode = 0
 offset_left = 60.0
 offset_top = 724.0
@@ -166,6 +168,38 @@ offset_bottom = 756.0
 theme_override_font_sizes/font_size = 20
 horizontal_alignment = 1
 text = "CATCH PROGRESS"
+
+[node name="DepthMinusButton" type="Button" parent="."]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 60.0
+offset_top = 900.0
+offset_right = 160.0
+offset_bottom = 960.0
+theme_override_font_sizes/font_size = 28
+text = "-"
+
+[node name="DepthLabel" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 170.0
+offset_top = 900.0
+offset_right = 550.0
+offset_bottom = 960.0
+theme_override_font_sizes/font_size = 26
+horizontal_alignment = 1
+vertical_alignment = 1
+text = "Depth: 8ft"
+
+[node name="DepthPlusButton" type="Button" parent="."]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 560.0
+offset_top = 900.0
+offset_right = 660.0
+offset_bottom = 960.0
+theme_override_font_sizes/font_size = 28
+text = "+"
 
 [node name="ActionButton" type="Button" parent="."]
 unique_name_in_owner = true

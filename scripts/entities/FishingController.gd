@@ -32,11 +32,17 @@ const MAX_SIZE_NOISE_AMPLITUDE: float = 1.4
 ## regardless of species preference -- see _affinity_multiplier.
 const WRONG_DEPTH_LURE_MULTIPLIER: float = 0.05
 
+## How long a cast sits before something bites -- wide and slow on
+## purpose. A near-instant bite every cast doesn't feel like fishing.
+const MIN_WAIT_SECONDS: float = 4.0
+const MAX_WAIT_SECONDS: float = 18.0
+
 @export var location: FishingLocation
 
 var _state: State = State.IDLE
 var _tension: float = 0.5
 var _progress: float = 0.0
+var _wait_timer: float = 0.0
 var _bite_timer: float = 0.0
 var _pending_fish: Fish
 var _pending_weight_lb: float = 0.0
@@ -59,16 +65,26 @@ func _ready() -> void:
 		# than waiting for the first bite roll to need it. A cast takes a
 		# few seconds anyway, usually enough for the request to land first.
 		WeatherService.prime(location.id)
+		_current_depth_ft = (location.min_depth_ft + location.max_depth_ft) * 0.5
 	_set_state(State.IDLE)
 
 func get_state() -> State:
 	return _state
 
-## Exposed so the HUD can display current conditions (weather + this
-## cast's rolled depth) -- otherwise the whole weather/lure/depth system
-## is invisible and unlearnable to the player.
+## Exposed so the HUD can display/edit current conditions -- otherwise
+## the whole weather/lure/depth system is invisible and unlearnable to
+## the player. Depth is a player choice now, not rolled per cast (see
+## set_depth) -- this just reports whatever's currently selected.
 func get_current_depth_ft() -> float:
 	return _current_depth_ft
+
+## Called by the depth control in the HUD. Clamped to this region's real
+## range -- there's no fishing "deeper than the lake actually gets".
+func set_depth(depth_ft: float) -> void:
+	if location != null:
+		_current_depth_ft = clamp(depth_ft, location.min_depth_ft, location.max_depth_ft)
+	else:
+		_current_depth_ft = depth_ft
 
 ## Called by MenuPanel when the player travels to a different region.
 ## Forces back to IDLE first -- switching mid-cast/mid-reel would leave
@@ -77,6 +93,7 @@ func get_current_depth_ft() -> float:
 func set_location(new_location: FishingLocation) -> void:
 	location = new_location
 	WeatherService.prime(new_location.id)
+	_current_depth_ft = (new_location.min_depth_ft + new_location.max_depth_ft) * 0.5
 	_pending_fish = null
 	_holding_reel = false
 	_set_state(State.IDLE)
@@ -102,39 +119,70 @@ func get_safe_band() -> Vector2:
 func cast() -> void:
 	if _state != State.IDLE:
 		return
-	_current_depth_ft = randf_range(location.min_depth_ft, location.max_depth_ft) if location != null else 5.0
+	_holding_reel = false
 	_set_state(State.CASTING)
 	# Cast animation/travel time is cosmetic for now -- tune once real art
 	# and a rod-tier-based cast distance stat exist.
 	await get_tree().create_timer(0.6).timeout
 	_start_waiting()
 
+## Which of the two sub-loops this cast follows -- a still/suspended
+## bait waits passively (the classic bobber-watch), an actively worked
+## lure only advances toward a bite while the player holds the button to
+## reel it in. A bare hook (no lure equipped) defaults to the passive
+## style -- see Lure.gd's presentation_style for the full reasoning.
+## Public so the HUD can branch its status text/visuals the same way
+## without duplicating the "no lure equipped" fallback rule.
+func get_current_style() -> StringName:
+	var lure: Lure = Lures.get_by_id(GameManager.equipped_lure)
+	return lure.presentation_style if lure != null else &"bobber"
+
 func _start_waiting() -> void:
 	_set_state(State.WAITING_FOR_BITE)
-	# Lower rod tier waits longer -- this is the one place gear progression
-	# should be felt turn-to-turn, not just in bigger numbers.
-	var wait_time := randf_range(1.5, 4.0)
-	await get_tree().create_timer(wait_time).timeout
-	if _state == State.WAITING_FOR_BITE:
-		_start_bite_window()
+	_wait_timer = randf_range(MIN_WAIT_SECONDS, MAX_WAIT_SECONDS)
 
 func _start_bite_window() -> void:
 	_set_state(State.BITE_WINDOW)
 	_bite_timer = _tier_stats().bite_window
 
-## Call from the Cast/Reel button's pressed signal during BITE_WINDOW to
-## hook the fish; missing the window loses it. Same input trigger the
-## player already has their thumb on, so there's no new button to teach.
+## Call from the Cast/Reel button's pressed signal. Behavior depends on
+## state AND, during WAITING_FOR_BITE, on the equipped lure's
+## presentation_style:
+## - Bobber style: a tap here means "bring the bait in early", not "set
+##   the hook" -- there's nothing to hook yet, the bobber hasn't moved.
+## - Retrieve style: a tap here means "start actively reeling" -- the
+##   wait timer only counts down while held (see _process). If a bite
+##   window opens while the player is already holding from the retrieve,
+##   nothing extra happens here -- Godot only fires this on a fresh
+##   press, so simply continuing to hold does NOT set the hook. They
+##   have to actually release and tap again once BITE_WINDOW starts,
+##   which is exactly the "hold to reel, tap to set the hook" skill
+##   moment this is supposed to be.
 func on_action_pressed() -> void:
 	match _state:
+		State.WAITING_FOR_BITE:
+			if get_current_style() == &"bobber":
+				_reel_in_early()
+			else:
+				_holding_reel = true
 		State.BITE_WINDOW:
 			_start_reeling()
 		State.REELING:
 			_holding_reel = true
 
 func on_action_released() -> void:
-	if _state == State.REELING:
-		_holding_reel = false
+	match _state:
+		State.WAITING_FOR_BITE:
+			if get_current_style() != &"bobber":
+				_holding_reel = false # pauses the retrieve -- the wait timer just stops, doesn't reset
+		State.REELING:
+			_holding_reel = false
+
+## Bobber style only: tap while the bait's still out to bring it in
+## early instead of waiting out a spot that isn't producing.
+func _reel_in_early() -> void:
+	_pending_fish = null
+	_set_state(State.IDLE)
 
 func _start_reeling() -> void:
 	var candidate := _roll_candidate_catch()
@@ -149,6 +197,13 @@ func _start_reeling() -> void:
 
 func _process(delta: float) -> void:
 	match _state:
+		State.WAITING_FOR_BITE:
+			# Bobber style counts down unconditionally (passive wait);
+			# retrieve style only counts down while actively held.
+			if get_current_style() == &"bobber" or _holding_reel:
+				_wait_timer -= delta
+				if _wait_timer <= 0.0:
+					_start_bite_window()
 		State.BITE_WINDOW:
 			_bite_timer -= delta
 			if _bite_timer <= 0.0:

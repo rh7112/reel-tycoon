@@ -4,11 +4,11 @@
 
 [resource]
 script = ExtResource("1")
-id = &"night_crawler_jig"
-display_name = "Night Crawler Jig"
-type = &"worm"
-color = Color(0.4, 0.25, 0.15, 1)
+id = &"dough_ball_bait"
+display_name = "Dough Ball Bait"
+type = &"catfish_bait"
+color = Color(0.85, 0.75, 0.55, 1)
 size = &"small"
-cost = 15
-effective_depth_ft = Vector2(0.0, 20.0)
+cost = 10
+effective_depth_ft = Vector2(0.0, 25.0)
 presentation_style = &"bobber"

@@ -8,9 +8,10 @@ extends RefCounted
 ## filesystem at runtime.
 
 const ALL: Array[Lure] = [
+	preload("res://resources/lures/night_crawler_jig.tres"),
+	preload("res://resources/lures/dough_ball_bait.tres"),
 	preload("res://resources/lures/hopper_topwater.tres"),
 	preload("res://resources/lures/flash_spinner.tres"),
-	preload("res://resources/lures/night_crawler_jig.tres"),
 	preload("res://resources/lures/deep_diver_crank.tres"),
 	preload("res://resources/lures/suspending_jerkbait.tres"),
 ]

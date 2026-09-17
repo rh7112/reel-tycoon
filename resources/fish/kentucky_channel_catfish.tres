@@ -14,6 +14,6 @@ max_weight_lb = 25.0
 size_skew = 6.0
 catch_weight = 1.8
 preferred_weather = Array[StringName]([&"cloudy", &"rainy"])
-preferred_lure_types = Array[StringName]([&"worm"])
+preferred_lure_types = Array[StringName]([&"worm", &"catfish_bait"])
 preferred_depth_ft = Vector2(8.0, 25.0)
 bite_affinity_strength = 0.35

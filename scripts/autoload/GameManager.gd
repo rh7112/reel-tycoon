@@ -21,8 +21,11 @@ var current_location: StringName = &"pond"
 ## deliberately separate from rod_tier.
 var region_mastery: Dictionary = {}
 
-var owned_lures: Array[StringName] = []
-var equipped_lure: StringName = &""
+## Worm-on-a-bobber is the classic beginner setup -- everyone starts
+## owning and using it, same as they start on a push-button reel below.
+## Every other lure is something to unlock later.
+var owned_lures: Array[StringName] = [&"night_crawler_jig"]
+var equipped_lure: StringName = &"night_crawler_jig"
 
 ## One-time gear purchase -- lets the player see an approaching fish's
 ## rough size (a shadow, bucketed small/medium/large/trophy, never an
@@ -36,8 +39,10 @@ var owns_polarized_glasses: bool = false
 ## not something bought -- it's "what pound test did you spool on today,"
 ## a strategic pick with real trade-offs (heavier = handles big fish
 ## without snapping, but spookier to line-shy species), not a gear tier.
-var owned_reel_types: Array[StringName] = [&"spinning"]
-var equipped_reel_type: StringName = &"spinning"
+## Push-button (spincast) is the classic beginner reel -- everyone
+## starts here, same as they start on a worm/bobber rig above.
+var owned_reel_types: Array[StringName] = [&"push_button"]
+var equipped_reel_type: StringName = &"push_button"
 var owned_line_types: Array[StringName] = [&"monofilament"]
 var equipped_line_type: StringName = &"monofilament"
 var line_weight_lb: int = 10
@@ -216,13 +221,13 @@ func _load() -> void:
 	unlocked_locations.assign(data.get("unlocked_locations", [&"pond"]))
 	current_location = StringName(data.get("current_location", "pond"))
 	region_mastery = data.get("region_mastery", {})
-	owned_lures.assign(data.get("owned_lures", []))
-	equipped_lure = StringName(data.get("equipped_lure", ""))
+	owned_lures.assign(data.get("owned_lures", [&"night_crawler_jig"]))
+	equipped_lure = StringName(data.get("equipped_lure", "night_crawler_jig"))
 	fish_records = data.get("fish_records", {})
 	cards = data.get("cards", {})
 	owns_polarized_glasses = data.get("owns_polarized_glasses", false)
-	owned_reel_types.assign(data.get("owned_reel_types", [&"spinning"]))
-	equipped_reel_type = StringName(data.get("equipped_reel_type", "spinning"))
+	owned_reel_types.assign(data.get("owned_reel_types", [&"push_button"]))
+	equipped_reel_type = StringName(data.get("equipped_reel_type", "push_button"))
 	owned_line_types.assign(data.get("owned_line_types", [&"monofilament"]))
 	equipped_line_type = StringName(data.get("equipped_line_type", "monofilament"))
 	line_weight_lb = data.get("line_weight_lb", 10)

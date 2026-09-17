@@ -11,3 +11,4 @@ color = Color(0.7, 0.75, 0.8, 1)
 size = &"medium"
 cost = 45
 effective_depth_ft = Vector2(4.0, 12.0)
+presentation_style = &"retrieve"

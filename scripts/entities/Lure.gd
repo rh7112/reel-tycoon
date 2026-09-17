@@ -21,6 +21,16 @@ class_name Lure
 @export var cost: int = 0
 @export var icon: Texture2D
 
+## How this bait is fished -- decides which of FishingController's two
+## sub-loops applies. &"bobber": a suspended/still bait (worm, dough
+## balls/catfish bait) -- cast it out and wait; the bobber visibly dips
+## when something takes it. &"retrieve": an actively worked lure
+## (spinner, crankbait, jerkbait, topwater) -- you have to hold the
+## button to reel it in, and a strike only counts if you actually
+## release and tap again to set the hook; just continuing to hold does
+## nothing. You're not bobber-fishing a jerkbait.
+@export var presentation_style: StringName = &"bobber"
+
 ## The water depth (feet) this lure actually works at -- a deep-diving
 ## crankbait outside its dive range is just scraping bottom or riding the
 ## surface uselessly, regardless of whether the species on the other end

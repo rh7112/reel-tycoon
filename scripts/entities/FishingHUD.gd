@@ -28,11 +28,14 @@ func _ready() -> void:
 	%ActionButton.button_up.connect(_on_action_button_up)
 	%MenuButton.pressed.connect(%MenuPanel.open)
 	%CloseMenuButton.pressed.connect(_refresh_region_visuals)
+	%DepthMinusButton.pressed.connect(_on_depth_step.bind(-1.0))
+	%DepthPlusButton.pressed.connect(_on_depth_step.bind(1.0))
 
 	_on_coins_changed(Economy.coins)
 	_on_state_changed(controller.get_state())
 	%ProgressFillBar.size.x = 0.0
 	%Bobber.position.y = BOBBER_REST_Y
+	_update_depth_label()
 	_refresh_region_visuals()
 
 func _process(delta: float) -> void:
@@ -48,7 +51,7 @@ func _on_action_button_down() -> void:
 	match _current_state:
 		FishingController.State.IDLE:
 			controller.cast()
-		FishingController.State.BITE_WINDOW, FishingController.State.REELING:
+		FishingController.State.WAITING_FOR_BITE, FishingController.State.BITE_WINDOW, FishingController.State.REELING:
 			controller.on_action_pressed()
 
 func _on_action_button_up() -> void:
@@ -56,6 +59,18 @@ func _on_action_button_up() -> void:
 
 func _on_state_changed(state: FishingController.State) -> void:
 	_current_state = state
+	%DepthMinusButton.disabled = state != FishingController.State.IDLE
+	%DepthPlusButton.disabled = state != FishingController.State.IDLE
+
+	# Nothing to show a tension/progress bar for until a fish is actually
+	# on the hook -- keeps the screen uncluttered for most of the loop,
+	# and the bars showing up is itself a signal that something's on.
+	var reel_ui_visible: bool = state == FishingController.State.REELING or state == FishingController.State.RESULT
+	%TensionTrack.visible = reel_ui_visible
+	%TensionHint.visible = reel_ui_visible
+	%ProgressTrack.visible = reel_ui_visible
+	%ProgressHint.visible = reel_ui_visible
+
 	match state:
 		FishingController.State.IDLE:
 			%StatusLabel.text = "Tap Cast to fish!"
@@ -68,8 +83,14 @@ func _on_state_changed(state: FishingController.State) -> void:
 			%StatusLabel.text = "Casting..."
 			_tween_bobber_to(BOBBER_CAST_Y, 0.6)
 		FishingController.State.WAITING_FOR_BITE:
-			%StatusLabel.text = "Waiting for a bite..."
-			_start_idle_bob()
+			if controller.get_current_style() == &"bobber":
+				%StatusLabel.text = "Waiting for a bite... (tap to reel in early)"
+				%ActionButton.text = "Reel In"
+				_start_idle_bob()
+			else:
+				%StatusLabel.text = "Hold to retrieve..."
+				%ActionButton.text = "Hold to Reel"
+				_kill_bob_tween()
 			_update_conditions_label()
 		FishingController.State.BITE_WINDOW:
 			%StatusLabel.text = "BITE! Tap now!"
@@ -118,13 +139,27 @@ func _update_conditions_label() -> void:
 	var depth_ft := controller.get_current_depth_ft()
 	%ConditionsLabel.text = "%s -- %dft deep" % [Weather.display_name(weather_id), int(depth_ft)]
 
-## Re-syncs the water tint and conditions label to whatever region we're
-## actually in -- called after the menu closes, since traveling is the
-## only way that can have changed mid-session.
+func _on_depth_step(delta_ft: float) -> void:
+	controller.set_depth(controller.get_current_depth_ft() + delta_ft)
+	_update_depth_label()
+	_refresh_region_visuals()
+
+func _update_depth_label() -> void:
+	%DepthLabel.text = "Depth: %dft" % int(controller.get_current_depth_ft())
+
+## Re-syncs the water tint and depth/conditions labels to whatever
+## region (and depth) we're actually in -- called after the menu
+## closes, since traveling is the only way the region can have changed
+## mid-session, and after every depth step. Deeper water reads darker/
+## murkier, so picking a depth actually looks like picking a depth.
 func _refresh_region_visuals() -> void:
 	if controller.location == null:
 		return
-	%Background.color = controller.location.theme_color
+	var loc: FishingLocation = controller.location
+	var depth_fraction: float = 0.0
+	if loc.max_depth_ft > loc.min_depth_ft:
+		depth_fraction = clamp((controller.get_current_depth_ft() - loc.min_depth_ft) / (loc.max_depth_ft - loc.min_depth_ft), 0.0, 1.0)
+	%Background.color = loc.theme_color.darkened(depth_fraction * 0.4)
 
 ## Repositions the green safe-band highlight to match the current
 ## region's mastery-derived safe band -- it widens on upgrade, so this
