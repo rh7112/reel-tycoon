@@ -31,10 +31,27 @@ numbers differ a lot.
 
 ## Core loop
 
-Cast (tap) -> bite cue -> reel (hold-to-manage-tension mini-game) ->
-catch produces coins AND a card -> spend coins on gear -> unlock the next
-region (coins + that region's species-completion gate) -> repeat, now
-against a new roster of native species with region-realistic sizing.
+Cast -> wait for a bite -> hook it -> reel (hold-to-manage-tension
+mini-game) -> catch produces coins AND a card -> spend coins on gear ->
+unlock the next region (coins + that region's species-completion gate)
+-> repeat, now against a new roster of native species with
+region-realistic sizing.
+
+The wait/hook step forks by equipped lure (`Lure.presentation_style`,
+see `FishingController.get_current_style`):
+- **Bobber** (worm, dough-ball catfish bait): passive -- cast it and
+  wait, tap to bring it in early if a spot isn't producing, tap again
+  when it bites to hook.
+- **Retrieve** (spinner/crankbait/jerkbait/topwater): active -- hold
+  the button to reel it in; the wait only counts down while held. A
+  strike only becomes a hookset if you actually release and tap again
+  -- continuing to hold through it does nothing, on purpose (Godot's
+  button-down signal only fires on a fresh press).
+
+Depth is a player choice (a +/- stepper, clamped to the region's real
+range), not randomized -- the water visibly darkens as you fish deeper.
+The tension/progress bars stay hidden until something's actually on the
+hook.
 
 **What actually decides which fish bites**, each cast: current weather
 for that region, the equipped lure's type, the equipped lure's effective
@@ -109,6 +126,11 @@ exactly what to check first if something doesn't load.
   static rod + dynamic fishing line (`Line2D`), a reel wheel that spins
   while reeling, a simple sky/water/shoreline backdrop tinted per region.
 
+Starting gear is a push-button reel + a worm-on-a-bobber rig, both
+owned/equipped by default -- matches how most people actually start,
+and everything else (other reel types, every other lure) is something
+to unlock rather than a blank slate.
+
 ### Data modeled but NOT wired into gameplay yet
 - **Polarized glasses / sight-fishing**: `GameManager.owns_polarized_
   glasses` exists as a field, but the actual mechanic (roll the candidate
@@ -117,6 +139,14 @@ exactly what to check first if something doesn't load.
   weight -- swimming toward the bobber shortly before the bite; let an
   ignored bite double as "I let that one go") is designed but not built.
   No `fish_sighted` signal, no shadow visual, no purchase UI yet.
+
+### Backlog
+Tracked as GitHub issues from here on rather than duplicated in this
+file -- see [the issue tracker](https://github.com/rh7112/reel-tycoon/issues)
+for the current list (sight-fishing, consumable lure economy + snag
+risk, catch confirmation popup, sponsorships, rod/reel visual overhaul,
+more regions, real art, the leaderboard backend, ads/IAP, store/export
+setup). Each is closed via the commit that implements it.
 
 ### Known risk spots to check first if Godot reports an error on load
 Everything below is hand-written Godot 4 syntax that's *believed*
@@ -136,41 +166,48 @@ If any of these turn out to be wrong, the fix is usually small and
 localized (once Godot's error message says which line) -- flagging them
 so a first-load error isn't a surprise.
 
-**Already found and fixed one, live**: a global `class_name` and a
-nested `enum` of the same bare name collide in GDScript -- the new card
-rarity system was originally also named `Rarity`, which shadowed
-`Fish.gd`'s own pre-existing `enum Rarity` (species-level "how rare is
-this species to encounter," a different, older concept) every time
-`Fish.gd` wrote `Rarity.COMMON`. Renamed the new one to `CardRarity`
-throughout. If Godot ever reports "Cannot assign a value of type X.Y to
-variable ... with specified type Y" again, this exact collision pattern
-(a global class name stealing a nested enum's bare name inside its own
-class) is the first thing to check.
+**Bugs already found and fixed, live** (each confirmed by an actual
+Godot error, not guessed):
+- A global `class_name` and a nested `enum` of the same bare name
+  collide -- the card rarity system was originally also named `Rarity`,
+  shadowing `Fish.gd`'s own pre-existing `enum Rarity` (an unrelated,
+  older concept) every time `Fish.gd` wrote `Rarity.COMMON`. Renamed to
+  `CardRarity`. If Godot ever reports "Cannot assign a value of type
+  X.Y to variable ... with specified type Y" again, check for this
+  exact pattern first.
+- `var x := ... * some_dict.field` uses type inference (`:=`), but a
+  `Dictionary` field access is untyped `Variant` to the static
+  analyzer, even though it's a float at runtime -- inference fails with
+  "Cannot infer the type of ... because the value doesn't have a set
+  type." Fix is an explicit `var x: float = ...` instead of `:=`
+  wherever a Dictionary-sourced value (from `RodTiers.gd`/
+  `ReelTypes.gd`/`LineTypes.gd`, all plain-Dictionary tables) is
+  combined arithmetically.
+- `FishingHUD._on_action_button_down` never forwarded presses during
+  `WAITING_FOR_BITE` to the controller at all -- silently meant neither
+  the bobber's "tap to bring it in early" nor the retrieve style's
+  "hold to reel" could ever fire, with no error to catch it. Worth
+  double-checking any new state gets wired into *both*
+  `FishingController`'s logic and `FishingHUD`'s input forwarding --
+  this class of bug (a state that logic handles but no button ever
+  routes input to) produces no error at all, just a control that
+  silently does nothing.
 
 ## Running it
 
 Open this folder in Godot 4.3+ (tested by Ryan on 4.7) and press Play --
-`project.godot` points `run/main_scene` at `FishingScene.tscn`. Tap
-**Cast**, wait for "BITE!", tap again to hook it, then hold the button to
-keep the white tension marker inside the green band until the orange
-progress bar fills. Tap **Menu** to reach the rod shop, region travel/
-mastery, lure shop, card binder, and leaderboard tabs.
+`project.godot` points `run/main_scene` at `FishingScene.tscn`. Use the
++/- buttons to pick a depth, tap **Cast**, then it depends on the
+equipped lure (worm-on-a-bobber by default): wait for "BITE!" and tap
+to hook it, or tap again anytime first to bring it in early. Once
+hooked, hold the button to keep the white tension marker inside the
+green band until the orange progress bar fills -- these bars only
+appear once something's on. Tap **Menu** to reach the gear shop
+(rod/reel/line), region travel/mastery, lure shop, card binder, and
+leaderboard tabs.
 
 ## Next steps
 
-1. **Playtest in Godot now** -- see "Known risk spots" above.
-2. Build out the tackle system (reel/line type + weight) that's currently
-   just inert `GameManager` fields.
-3. Build the polarized-glasses sight-fishing mechanic.
-4. Source real placeholder art from [Kenney.nl](https://kenney.nl) to
-   replace the flat-color/drawn-shape visuals.
-5. Add more regions following the roadmap order above.
-6. A real backend for the leaderboard (weather doesn't need one anymore --
-   see WeatherService.gd's header -- but real cross-player comparison
-   still does). Could reuse the Go/MariaDB pattern from `portfolio-api`.
-7. Rewarded-ads SDK integration once there's a build worth monetizing.
-8. Android (Google Play Console) / iOS (Apple Developer Program) accounts
-   + export presets for real device builds. Note: a real device build
-   will need the Android INTERNET permission for `WeatherService`'s
-   HTTP requests to work -- the Godot editor doesn't need this, but an
-   exported APK will.
+**Playtest in Godot now** -- see "Known risk spots" above. Everything
+else worth doing next is in the [issue tracker](https://github.com/rh7112/reel-tycoon/issues),
+not this file.
