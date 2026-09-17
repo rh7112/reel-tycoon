@@ -324,18 +324,32 @@ func _tackle_leniency() -> float:
 
 func _finish_reel(success: bool) -> void:
 	if success:
-		var ratio := _weight_ratio(_pending_fish, _pending_weight_lb)
-		var coins := _award_catch(_pending_fish, ratio)
+		var fish := _pending_fish
+		var weight_lb := _pending_weight_lb
+		var ratio := _weight_ratio(fish, weight_lb)
+		var coins := _award_catch(fish, ratio)
 		var tier := CardRarity.tier_for_ratio(ratio)
-		GameManager.record_catch(_pending_fish, _pending_weight_lb)
-		GameManager.record_card(_pending_fish, _pending_weight_lb, ratio)
-		catch_result.emit(_pending_fish, _pending_weight_lb, coins, tier)
-	else:
-		fish_escaped.emit()
+		GameManager.record_catch(fish, weight_lb)
+		GameManager.record_card(fish, weight_lb, ratio)
+		_pending_fish = null
+		_set_state(State.RESULT)
+		catch_result.emit(fish, weight_lb, coins, tier)
+		# A real catch waits here -- confirm_catch() (called by the catch
+		# popup's dismiss button) is what actually returns to IDLE. Worth
+		# a deliberate look, not an auto-skip. A missed/escaped fish (the
+		# branch below) keeps the brief auto-pause -- there's nothing to
+		# show a popup about.
+		return
+	fish_escaped.emit()
 	_pending_fish = null
 	_set_state(State.RESULT)
 	await get_tree().create_timer(0.9).timeout
 	_set_state(State.IDLE)
+
+## Called by the catch-confirmation popup's dismiss button.
+func confirm_catch() -> void:
+	if _state == State.RESULT:
+		_set_state(State.IDLE)
 
 ## Rough, non-numeric size impression for the sighting preview -- real
 ## polarized glasses give an impression, not a readout, so this never

@@ -117,6 +117,12 @@ exactly what to check first if something doesn't load.
   `FishingController._tick_reel`/`_affinity_multiplier`. Equip from the
   "Gear" menu tab (`RodPanel.gd`).
 - Card collection (`GameManager.cards`) + region-completion gate.
+- A real catch pauses the game with a modal popup (`CatchPopup.gd`,
+  rarity/species/weight/coins) that has to be dismissed
+  (`FishingController.confirm_catch`) before casting again -- folds in
+  what used to be a separate floating "+coins" text rather than
+  showing both. A missed/escaped fish keeps the old brief auto-pause;
+  there's nothing worth a popup about that.
 - A local-only leaderboard (`LeaderboardService.gd`) that's honest about
   not comparing to real other players yet.
 - A tabbed menu (Gear / Region / Lures / Records / Ranks) built almost

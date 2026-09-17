@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3]
+[gd_scene load_steps=14 format=3]
 
 [ext_resource type="Script" path="res://scripts/entities/FishingController.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/entities/FishingHUD.gd" id="2"]
@@ -13,6 +13,7 @@
 [ext_resource type="Script" path="res://scripts/ui/LeaderboardPanel.gd" id="11"]
 [ext_resource type="Script" path="res://scripts/ui/FishShadowVisual.gd" id="12"]
 [ext_resource type="Script" path="res://scripts/ui/DockVisual.gd" id="13"]
+[ext_resource type="Script" path="res://scripts/ui/CatchPopup.gd" id="14"]
 
 [node name="FishingScene" type="Control"]
 layout_mode = 3
@@ -332,3 +333,56 @@ offset_top = 1000.0
 offset_right = 630.0
 offset_bottom = 1050.0
 text = "Close"
+
+[node name="CatchPopup" type="Control" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("14")
+
+[node name="Backdrop" type="ColorRect" parent="CatchPopup"]
+layout_mode = 1
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0, 0, 0, 0.6)
+
+[node name="Panel" type="Panel" parent="CatchPopup"]
+layout_mode = 0
+offset_left = 70.0
+offset_top = 460.0
+offset_right = 650.0
+offset_bottom = 780.0
+
+[node name="CatchTitleLabel" type="Label" parent="CatchPopup/Panel"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 24.0
+offset_top = 24.0
+offset_right = 556.0
+offset_bottom = 74.0
+theme_override_font_sizes/font_size = 32
+horizontal_alignment = 1
+text = "Common Catch!"
+
+[node name="CatchDetailLabel" type="Label" parent="CatchPopup/Panel"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 24.0
+offset_top = 90.0
+offset_right = 556.0
+offset_bottom = 170.0
+theme_override_font_sizes/font_size = 26
+horizontal_alignment = 1
+autowrap_mode = 2
+text = "1.0lb Fish\n+1 coins"
+
+[node name="CatchContinueButton" type="Button" parent="CatchPopup/Panel"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 24.0
+offset_top = 240.0
+offset_right = 556.0
+offset_bottom = 300.0
+theme_override_font_sizes/font_size = 26
+text = "Nice catch!"
