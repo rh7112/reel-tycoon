@@ -42,6 +42,8 @@ func refresh() -> void:
 	_build_line_weight_section()
 	_content.add_child(HSeparator.new())
 	_build_polarized_glasses_section()
+	_content.add_child(HSeparator.new())
+	_build_sponsorship_section()
 
 func _build_rod_section() -> void:
 	var current: Dictionary = RodTiers.get_tier(GameManager.rod_tier)
@@ -203,3 +205,33 @@ func _build_polarized_glasses_section() -> void:
 			GameManager.save()
 			refresh())
 	_content.add_child(buy_button)
+
+## A straight upgrade ladder like rod/boat -- multiplies coins per
+## catch (SponsorshipTiers.gd, applied in FishingController._award_catch).
+func _build_sponsorship_section() -> void:
+	var current: Dictionary = SponsorshipTiers.get_tier(GameManager.sponsorship_tier)
+	var title := Label.new()
+	title.add_theme_font_size_override("font_size", 26)
+	title.text = "Sponsor: %s (x%.2f coins)" % [current.name, current.coin_mult]
+	_content.add_child(title)
+
+	if SponsorshipTiers.is_max_tier(GameManager.sponsorship_tier):
+		var maxed := Label.new()
+		maxed.text = "Top sponsorship reached -- for now."
+		_content.add_child(maxed)
+		return
+
+	var next: Dictionary = SponsorshipTiers.get_tier(GameManager.sponsorship_tier + 1)
+	var info := Label.new()
+	info.text = "Next: %s -- x%.2f coins per catch." % [next.name, next.coin_mult]
+	_content.add_child(info)
+
+	var upgrade_button := Button.new()
+	upgrade_button.text = "Upgrade for %d coins" % next.cost
+	upgrade_button.disabled = Economy.coins < next.cost
+	upgrade_button.pressed.connect(func() -> void:
+		if Economy.spend_coins(next.cost):
+			GameManager.sponsorship_tier += 1
+			GameManager.save()
+			refresh())
+	_content.add_child(upgrade_button)
