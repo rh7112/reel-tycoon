@@ -62,6 +62,7 @@ func _on_state_changed(state: FishingController.State) -> void:
 			%ActionButton.text = "Cast"
 			%ProgressFillBar.size.x = 0.0
 			_kill_bob_tween()
+			%Bobber.scale = Vector2.ONE
 			_tween_bobber_to(BOBBER_REST_Y, 0.4)
 		FishingController.State.CASTING:
 			%StatusLabel.text = "Casting..."
@@ -73,11 +74,12 @@ func _on_state_changed(state: FishingController.State) -> void:
 		FishingController.State.BITE_WINDOW:
 			%StatusLabel.text = "BITE! Tap now!"
 			%ActionButton.text = "Hook it!"
-			_kill_bob_tween()
-			_tween_bobber_to(BOBBER_CAST_Y + BOBBER_BITE_DIP, 0.15)
+			_start_bite_submerge()
 		FishingController.State.REELING:
 			%StatusLabel.text = "Reel it in -- hold to keep the marker in the green!"
 			%ActionButton.text = "Hold to Reel"
+			_kill_bob_tween()
+			%Bobber.scale = Vector2.ONE
 			_position_safe_band()
 		FishingController.State.RESULT:
 			%ActionButton.text = "..."
@@ -93,7 +95,7 @@ func _on_tension_updated(tension: float, progress: float) -> void:
 	# Visually reel the bobber back in as catch progress fills, so the
 	# animation reads as "pulling the fish toward shore" rather than a
 	# progress bar that happens to sit near an unrelated bobbing dot.
-	%Bobber.position.y = lerp(BOBBER_CAST_Y + BOBBER_BITE_DIP, BOBBER_REST_Y, progress)
+	%Bobber.position.y = lerp(BOBBER_CAST_Y + BOBBER_SUBMERGE_DEPTH, BOBBER_REST_Y, progress)
 
 func _on_catch_result(fish: Fish, weight_lb: float, coins: int, rarity_tier: CardRarity.Tier) -> void:
 	var rarity_name := CardRarity.name_for_tier(rarity_tier)
@@ -139,10 +141,34 @@ func _tween_bobber_to(target_y: float, duration: float) -> void:
 
 func _start_idle_bob() -> void:
 	_kill_bob_tween()
+	%Bobber.scale = Vector2.ONE
 	_bob_tween = create_tween()
 	_bob_tween.set_loops()
 	_bob_tween.tween_property(%Bobber, "position:y", BOBBER_CAST_Y - 10.0, 0.6).set_trans(Tween.TRANS_SINE)
 	_bob_tween.tween_property(%Bobber, "position:y", BOBBER_CAST_Y + 10.0, 0.6).set_trans(Tween.TRANS_SINE)
+
+## A bite pulls the bobber under (deeper + slightly smaller, selling
+## "gone below the surface") and then, once submerged, shakes it hard
+## and fast -- a fixed set of quick random hops looped, which reads as
+## a violent fight even though the pattern itself repeats every ~0.3s.
+func _start_bite_submerge() -> void:
+	_kill_bob_tween()
+	_bob_tween = create_tween()
+	_bob_tween.set_parallel(true)
+	_bob_tween.tween_property(%Bobber, "position:y", BOBBER_CAST_Y + BOBBER_SUBMERGE_DEPTH, 0.12).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	_bob_tween.tween_property(%Bobber, "scale", Vector2(0.7, 0.7), 0.12)
+	_bob_tween.chain().tween_callback(_start_bite_wiggle)
+
+func _start_bite_wiggle() -> void:
+	if _current_state != FishingController.State.BITE_WINDOW:
+		return # the bite already resolved while the submerge tween was still playing
+	_kill_bob_tween()
+	var base_pos: Vector2 = %Bobber.position
+	_bob_tween = create_tween()
+	_bob_tween.set_loops()
+	for i in range(5):
+		var offset := Vector2(randf_range(-BOBBER_WIGGLE_RADIUS, BOBBER_WIGGLE_RADIUS), randf_range(-BOBBER_WIGGLE_RADIUS * 0.6, BOBBER_WIGGLE_RADIUS * 0.6))
+		_bob_tween.tween_property(%Bobber, "position", base_pos + offset, BOBBER_WIGGLE_HOP_DURATION)
 
 func _kill_bob_tween() -> void:
 	if _bob_tween != null and _bob_tween.is_valid():
