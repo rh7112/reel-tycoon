@@ -48,9 +48,9 @@ not built yet, on purpose -- no point investing in the rest if the core
 tap/hold interaction isn't fun to repeat.
 
 - `scripts/entities/FishingController.gd` -- the cast/wait/bite/reel state
-  machine. Tune `SAFE_BAND`, `TENSION_RISE_RATE`, `TENSION_FALL_RATE`,
-  `PROGRESS_FILL_RATE`, `BITE_REACTION_WINDOW` here first when playtesting
-  feel -- these five constants are the entire feel of the game right now.
+  machine. As of the rod-upgrade shop below, its tuning (safe band width,
+  tension rise/fall, fill rate, bite window) is no longer hardcoded here --
+  tune it via `scripts/data/RodTiers.gd`'s per-tier values instead.
 - `scripts/entities/Fish.gd` / `FishingLocation.gd` -- data-only Resources,
   so adding a species or a location is a `.tres` file, not a code change.
 - `scripts/autoload/Economy.gd` -- coins/gems, signal-driven for UI.
@@ -59,9 +59,17 @@ tap/hold interaction isn't fun to repeat.
 - `scripts/autoload/SaveManager.gd` -- plain JSON to `user://save.json`.
   No schema versioning yet -- add it once the save shape stops changing
   weekly.
+- `scripts/data/RodTiers.gd` -- four rod tiers (cost + reel-feel tuning per
+  tier). Coins now actually buy something: `scripts/ui/ShopPanel.gd` is a
+  self-contained upgrade shop (open via the Shop button), and
+  `FishingController` reads its tuning from the current tier live, so an
+  upgrade changes reel feel immediately, mid-session.
 - `scenes/FishingScene.tscn` -- placeholder UI (flat-color rects, no art)
   wired to the above via `FishingHUD.gd`. One starter location (`pond`)
-  with three species (`resources/fish/*.tres`).
+  with three species (`resources/fish/*.tres`). Includes a floating
+  "+coins" popup on catch and an animated bobber (casts out, idles, jerks
+  on a bite, reels back in with catch progress) -- juice that doesn't
+  need real art to land.
 
 ## Running it
 
@@ -72,12 +80,16 @@ tension marker inside the green band until the orange progress bar fills.
 
 ## Next steps
 
-1. **Playtest the reel mini-game feel** and retune the five constants
-   above before building anything else on top -- this is the whole point
-   of building this piece first.
+1. **Test on an actual phone, not just the desktop editor window** -- the
+   cast/reel tap-and-hold was noted as feeling "clunky" on PC with a mouse;
+   that may just be mouse-vs-touch, but it's unverified until it's actually
+   played on a device. Godot can deploy straight to a USB-connected Android
+   phone with the Android build template installed.
 2. Source real placeholder art from [Kenney.nl](https://kenney.nl) (free,
-   no attribution required) to replace the flat-color rects.
-3. Build the shop/upgrade screen against `Economy` + `GameManager.rod_tier`.
+   no attribution required) to replace the flat-color rects -- the bobber,
+   background, and buttons are the highest-impact places to start.
+3. Surface the fish almanac (`GameManager.fish_caught` is already tracked,
+   nothing displays it yet) -- cheap addition, reuses existing data.
 4. Add a second location + species roster once the loop feels right, to
    prove out the "data-only" unlock pattern end to end.
 5. Wire up a rewarded-ads Godot plugin (AdMob is the standard choice) once

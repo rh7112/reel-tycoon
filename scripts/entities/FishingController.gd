@@ -10,13 +10,13 @@ class_name FishingController
 
 enum State { IDLE, CASTING, WAITING_FOR_BITE, BITE_WINDOW, REELING, RESULT }
 
-## Reel-mechanic tuning. A harder/rarer fish gets a faster-draining tension
-## bar and a narrower safe band -- see _start_reeling.
-const SAFE_BAND: Vector2 = Vector2(0.35, 0.75)
-const TENSION_RISE_RATE: float = 0.9   # per second, while holding Reel
-const TENSION_FALL_RATE: float = 0.6   # per second, while not holding
-const PROGRESS_FILL_RATE: float = 0.35 # per second, only while tension is in the safe band
-const BITE_REACTION_WINDOW: float = 1.1 # seconds to tap after a bite before the fish gets away
+## Reel-mechanic tuning now comes from RodTiers (keyed by
+## GameManager.rod_tier) instead of fixed constants, so a rod upgrade
+## actually changes how forgiving casting/reeling feels. Looked up fresh
+## each time rather than cached, so a mid-session upgrade takes effect
+## immediately without needing an extra refresh call.
+func _tier_stats() -> Dictionary:
+	return RodTiers.get_tier(GameManager.rod_tier)
 
 @export var location: FishingLocation
 
@@ -59,7 +59,7 @@ func _start_waiting() -> void:
 
 func _start_bite_window() -> void:
 	_set_state(State.BITE_WINDOW)
-	_bite_timer = BITE_REACTION_WINDOW
+	_bite_timer = _tier_stats().bite_window
 
 ## Call from the Cast/Reel button's pressed signal during BITE_WINDOW to
 ## hook the fish; missing the window loses it. Same input trigger the
@@ -96,7 +96,8 @@ func _process(delta: float) -> void:
 			_tick_reel(delta)
 
 func _tick_reel(delta: float) -> void:
-	_tension += (TENSION_RISE_RATE if _holding_reel else -TENSION_FALL_RATE) * delta
+	var stats := _tier_stats()
+	_tension += (stats.tension_rise_rate if _holding_reel else -stats.tension_fall_rate) * delta
 	_tension = clamp(_tension, 0.0, 1.0)
 
 	if _tension <= 0.0:
@@ -106,13 +107,19 @@ func _tick_reel(delta: float) -> void:
 		_finish_reel(false) # line snapped, pulled too hard
 		return
 
-	if _tension >= SAFE_BAND.x and _tension <= SAFE_BAND.y:
-		_progress += PROGRESS_FILL_RATE * delta
+	var safe_band: Vector2 = stats.safe_band
+	if _tension >= safe_band.x and _tension <= safe_band.y:
+		_progress += stats.progress_fill_rate * delta
 
 	tension_updated.emit(_tension, _progress)
 
 	if _progress >= 1.0:
 		_finish_reel(true)
+
+## Exposed so the HUD can draw the safe-band highlight at the right spot --
+## it moves when the player upgrades rods mid-session.
+func get_safe_band() -> Vector2:
+	return _tier_stats().safe_band
 
 func _finish_reel(success: bool) -> void:
 	if success:
