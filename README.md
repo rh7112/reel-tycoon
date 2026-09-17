@@ -136,9 +136,13 @@ exactly what to check first if something doesn't load.
   positioned at the shoreline.
 - Sponsorships (`SponsorshipTiers.gd`) -- another straight upgrade
   ladder, multiplies coins earned per catch (`FishingController._award_catch`).
-- Placeholder visuals with no real art yet: a two-tone drawn bobber, a
-  static rod + dynamic fishing line (`Line2D`), a reel wheel that spins
-  while reeling, a simple sky/water/shoreline backdrop tinted per region.
+- Reel visuals are distinct per equipped type (`ReelWheelVisual.gd`,
+  redraws on change like `DockVisual.gd`) -- push-button's enclosed
+  housing with a thumb-bar, spinning's exposed spool + bail arm,
+  baitcaster's star-drag knob.
+- Other placeholder visuals with no real art yet: a two-tone drawn
+  bobber, a static rod + dynamic fishing line (`Line2D`), a simple
+  sky/water/shoreline backdrop tinted per region.
 
 Starting gear is a push-button reel + a worm-on-a-bobber rig, both
 owned/equipped by default -- matches how most people actually start,
