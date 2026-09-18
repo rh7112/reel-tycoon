@@ -44,12 +44,12 @@ color = Color(0.76, 0.7, 0.5, 1)
 
 [node name="Dock" type="Node2D" parent="."]
 unique_name_in_owner = true
-position = Vector2(520, 145)
+position = Vector2(360, 1180)
 script = ExtResource("13")
 
 [node name="Rod" type="Line2D" parent="."]
-points = PackedVector2Array(650, 1230, 410, 150)
-width = 6.0
+points = PackedVector2Array(530, 690, 410, 150)
+width = 5.0
 default_color = Color(0.45, 0.3, 0.15, 1)
 
 [node name="FishingLine" type="Line2D" parent="."]
@@ -60,7 +60,7 @@ default_color = Color(0.9, 0.9, 0.9, 0.8)
 
 [node name="ReelWheel" type="Node2D" parent="."]
 unique_name_in_owner = true
-position = Vector2(650, 1150)
+position = Vector2(530, 680)
 script = ExtResource("5")
 
 [node name="FishShadow" type="Node2D" parent="."]

@@ -32,10 +32,20 @@ const MAX_SIZE_NOISE_AMPLITUDE: float = 1.4
 ## regardless of species preference -- see _affinity_multiplier.
 const WRONG_DEPTH_LURE_MULTIPLIER: float = 0.05
 
-## How long a cast sits before something bites -- wide and slow on
-## purpose. A near-instant bite every cast doesn't feel like fishing.
+## How long a bobber-style cast sits before something bites -- wide and
+## slow on purpose. A near-instant bite every cast doesn't feel like
+## fishing. Bobber-style always eventually gets a bite if you wait it
+## out, same as real patient bank/bobber fishing.
 const MIN_WAIT_SECONDS: float = 4.0
 const MAX_WAIT_SECONDS: float = 18.0
+
+## A retrieve-style cast is a single fixed-length pass instead of an
+## open-ended wait -- you reel the lure back across the water once, and
+## either something hits during that pass or it doesn't and you recast.
+## Real retrieves aren't a guaranteed bite the way patiently waiting out
+## a bobber is -- see _start_waiting/_match_quality for how "did
+## anything actually happen this retrieve" gets decided.
+const RETRIEVE_DURATION_SECONDS: float = 8.0
 
 ## How long before the bite the sighting preview fires, for players who
 ## own polarized glasses -- see _process/get_current_style.
@@ -51,6 +61,7 @@ var _bite_timer: float = 0.0
 var _pending_fish: Fish
 var _pending_weight_lb: float = 0.0
 var _sighted: bool = false
+var _will_bite: bool = true # retrieve-style only -- see _start_waiting
 var _current_depth_ft: float = 0.0
 var _holding_reel: bool = false
 
@@ -68,6 +79,10 @@ signal fish_sighted(size_bucket: String)
 ## consumable's baseline per-cast loss, or a hard lure's snag/bite-off.
 ## See _roll_lure_loss.
 signal lure_lost(lure_name: String, was_consumable: bool)
+
+## Retrieve-style only -- the fixed-duration retrieve ended with nothing
+## ever hitting. See _end_retrieve_with_no_bite.
+signal retrieve_came_up_empty()
 
 func _ready() -> void:
 	# The scene's exported `location` is only the fresh-install default --
@@ -222,6 +237,14 @@ func _lure_loss_chance(lure: Lure) -> float:
 ## at hook-time -- this is what lets polarized glasses show a real
 ## preview of the actual fish that's about to bite (see _process),
 ## instead of a fake placeholder rolled separately from the real one.
+##
+## Bobber style always eventually gets a bite (a real random wait, same
+## as always). Retrieve style is a single fixed-length pass instead --
+## whether anything hits at all during it is its own roll
+## (_will_bite), weighted by how good a match this candidate actually
+## was (match_quality), rather than a guaranteed eventual bite. A
+## retrieve through badly-mismatched water should often come back
+## empty, not just slower.
 func _start_waiting() -> void:
 	var candidate := _roll_candidate_catch()
 	if candidate.is_empty():
@@ -231,11 +254,26 @@ func _start_waiting() -> void:
 	_pending_weight_lb = candidate.weight_lb
 	_sighted = false
 	_set_state(State.WAITING_FOR_BITE)
-	_wait_timer = randf_range(MIN_WAIT_SECONDS, MAX_WAIT_SECONDS)
+	if get_current_style() == &"bobber":
+		_will_bite = true
+		_wait_timer = randf_range(MIN_WAIT_SECONDS, MAX_WAIT_SECONDS)
+	else:
+		var match_quality: float = candidate.get("match_quality", 1.0)
+		_will_bite = randf() < clamp(match_quality / 3.0, 0.1, 0.9)
+		_wait_timer = RETRIEVE_DURATION_SECONDS
 
 func _start_bite_window() -> void:
 	_set_state(State.BITE_WINDOW)
 	_bite_timer = _tier_stats().bite_window
+
+## Retrieve-style, no bite this pass -- the lure just comes back empty.
+## Distinct from fish_escaped (which implies something bit and got
+## away) and from _reel_in_early (a deliberate player choice) -- this
+## is neither, nothing was ever on the line.
+func _end_retrieve_with_no_bite() -> void:
+	_pending_fish = null
+	_set_state(State.IDLE)
+	retrieve_came_up_empty.emit()
 
 ## Call from the Cast/Reel button's pressed signal. Behavior depends on
 ## state AND, during WAITING_FOR_BITE, on the equipped lure's
@@ -299,7 +337,10 @@ func _process(delta: float) -> void:
 					_sighted = true
 					fish_sighted.emit(_size_bucket(_pending_fish, _pending_weight_lb))
 				if _wait_timer <= 0.0:
-					_start_bite_window()
+					if _will_bite:
+						_start_bite_window()
+					else:
+						_end_retrieve_with_no_bite()
 		State.BITE_WINDOW:
 			_bite_timer -= delta
 			if _bite_timer <= 0.0:
@@ -458,22 +499,46 @@ func _roll_candidate_catch() -> Dictionary:
 		var weight_lb := _roll_weight(fish)
 		var profile := fish.resolve_profile(weight_lb)
 		var multiplier := _affinity_multiplier(profile, weather_id, lure, _current_depth_ft, tackle_leniency)
+		multiplier *= _lure_size_multiplier(lure, weight_lb)
 		var effective_weight: float = max(fish.catch_weight, 0.0) * multiplier
-		candidates.append({"fish": fish, "weight_lb": weight_lb, "effective_weight": effective_weight})
+		candidates.append({"fish": fish, "weight_lb": weight_lb, "effective_weight": effective_weight, "base_weight": max(fish.catch_weight, 0.0)})
 		total_weight += effective_weight
 
 	if total_weight <= 0.0:
 		var fallback: Dictionary = candidates[randi() % candidates.size()]
-		return {"fish": fallback.fish, "weight_lb": fallback.weight_lb}
+		return {"fish": fallback.fish, "weight_lb": fallback.weight_lb, "match_quality": 0.0}
 
 	var roll := randf() * total_weight
 	var running: float = 0.0
 	for candidate in candidates:
 		running += candidate.effective_weight
 		if roll <= running:
-			return {"fish": candidate.fish, "weight_lb": candidate.weight_lb}
+			return {"fish": candidate.fish, "weight_lb": candidate.weight_lb, "match_quality": _match_quality(candidate)}
 	var last: Dictionary = candidates[-1]
-	return {"fish": last.fish, "weight_lb": last.weight_lb}
+	return {"fish": last.fish, "weight_lb": last.weight_lb, "match_quality": _match_quality(last)}
+
+## How much better (or worse) than a neutral pick this candidate was --
+## used to decide whether a retrieve-style cast produces a bite at all
+## within its fixed duration (see _start_waiting). 1.0 = neutral,
+## trending toward 0 for a badly-mismatched candidate (wrong depth/
+## weather/lure, or a lure that's plain too big for this specimen).
+func _match_quality(candidate: Dictionary) -> float:
+	if candidate.base_weight <= 0.0:
+		return 0.0
+	return candidate.effective_weight / candidate.base_weight
+
+## A 0.2lb bluegill cannot physically take a lure sized for bass, no
+## matter how well type/depth/weather line up -- being even moderately
+## undersized craters the odds rather than just discounting them, via a
+## cubic falloff (a fish at half the lure's minimum target weight gets
+## roughly an eighth the chance, not half).
+func _lure_size_multiplier(lure: Lure, weight_lb: float) -> float:
+	if lure == null or lure.min_target_weight_lb <= 0.0:
+		return 1.0
+	if weight_lb >= lure.min_target_weight_lb:
+		return 1.0
+	var undersize_ratio: float = weight_lb / lure.min_target_weight_lb
+	return pow(clamp(undersize_ratio, 0.0, 1.0), 3.0)
 
 ## Realistic skew: min + (max-min) * pow(randf(), size_skew). At skew=1
 ## this is a plain uniform roll; every point above 1 makes big fish

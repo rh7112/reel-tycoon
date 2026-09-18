@@ -15,3 +15,4 @@ is_consumable = false
 pack_size = 1
 pack_cost = 12
 snag_risk = 0.1
+min_target_weight_lb = 1.0

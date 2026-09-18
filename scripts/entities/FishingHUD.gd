@@ -35,6 +35,7 @@ func _ready() -> void:
 	controller.fish_escaped.connect(_on_fish_escaped)
 	controller.fish_sighted.connect(_on_fish_sighted)
 	controller.lure_lost.connect(_on_lure_lost)
+	controller.retrieve_came_up_empty.connect(_on_retrieve_came_up_empty)
 	Economy.coins_changed.connect(_on_coins_changed)
 
 	%ActionButton.button_down.connect(_on_action_button_down)
@@ -100,6 +101,7 @@ func _on_state_changed(state: FishingController.State) -> void:
 			_tween_bobber_to(BOBBER_REST_Y, 0.4)
 		FishingController.State.CASTING:
 			%StatusLabel.text = "Casting..."
+			%Bobber.style = controller.get_current_style()
 			_tween_bobber_to(BOBBER_CAST_Y, 0.6)
 		FishingController.State.WAITING_FOR_BITE:
 			if controller.get_current_style() == &"bobber":
@@ -154,6 +156,12 @@ func _on_fish_sighted(size_bucket: String) -> void:
 func _on_fish_escaped() -> void:
 	%StatusLabel.text = "It got away!"
 
+## Fires after the state's already back to IDLE, same ordering reason
+## as _on_lure_lost -- this message needs to win, not get immediately
+## overwritten by the generic "Tap Cast" text.
+func _on_retrieve_came_up_empty() -> void:
+	%StatusLabel.text = "Nothing there -- reel it in and try again."
+
 ## Fires after the state's already back to IDLE (see FishingController.
 ## cast's ordering note) -- this message is meant to win and stay put,
 ## not get immediately overwritten by the generic "Tap Cast" text.
@@ -198,6 +206,7 @@ func _refresh_region_visuals() -> void:
 		depth_fraction = clamp((controller.get_current_depth_ft() - loc.min_depth_ft) / (loc.max_depth_ft - loc.min_depth_ft), 0.0, 1.0)
 	%Background.color = loc.theme_color.darkened(depth_fraction * 0.4)
 	%Dock.tier = GameManager.boat_tier
+	%Dock.depth_fraction = depth_fraction
 	%ReelWheel.reel_type = GameManager.equipped_reel_type
 
 ## Repositions the green safe-band highlight to match the current

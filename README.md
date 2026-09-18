@@ -46,20 +46,30 @@ see `FishingController.get_current_style`):
   the button to reel it in; the wait only counts down while held. A
   strike only becomes a hookset if you actually release and tap again
   -- continuing to hold through it does nothing, on purpose (Godot's
-  button-down signal only fires on a fresh press).
+  button-down signal only fires on a fresh press). Unlike bobber
+  (which always eventually gets a bite if you wait it out), a retrieve
+  is a single fixed-length pass (`RETRIEVE_DURATION_SECONDS`) -- it can
+  come up completely empty if the water/lure match was poor, same as a
+  real cast-and-reel not always producing a strike.
 
 Depth is a player choice (a +/- stepper, clamped to the region's real
-range), not randomized -- the water visibly darkens as you fish deeper.
+range and the current boat tier's cap), not randomized -- the water
+visibly darkens as you fish deeper.
 The tension/progress bars stay hidden until something's actually on the
 hook.
 
 **What actually decides which fish bites**, each cast: current weather
 for that region, the equipped lure's type, the equipped lure's effective
-depth vs. the cast's rolled depth, and each species' (or, for some
-species, each *weight class* of that species -- see `FishSizeClass.gd`)
-own weather/lure/depth preferences. A picky trophy fish can realistically
-ignore a bad presentation entirely. See `FishingController._roll_
-candidate_catch` and `_affinity_multiplier` for the actual math.
+depth vs. the cast's rolled depth, whether the rolled specimen's actual
+weight is even physically plausible for that lure's size (a 0.2lb
+bluegill can't fit a bass-sized crankbait in its mouth -- see
+`Lure.min_target_weight_lb`/`_lure_size_multiplier`, a cubic falloff so
+being undersized craters the odds rather than just discounting them),
+and each species' (or, for some species, each *weight class* of that
+species -- see `FishSizeClass.gd`) own weather/lure/depth preferences. A
+picky trophy fish can realistically ignore a bad presentation entirely.
+See `FishingController._roll_candidate_catch` and `_affinity_multiplier`
+for the actual math.
 
 **Weather is real for regions tied to an actual lake** (Lake Monroe,
 Kentucky Lake) -- fetched live from Open-Meteo (free, no API key) for
@@ -149,18 +159,29 @@ exactly what to check first if something doesn't load.
   Bass Boat -> Tournament Bass Boat, a straight upgrade ladder (unlike
   tackle/lures) that caps how deep `FishingController.set_depth` will
   let the player fish, combined with each region's own real range --
-  whichever is smaller wins. Drawn per-tier (`DockVisual.gd`, actually
-  redraws on tier change, unlike the static Bobber/ReelWheel visuals),
-  positioned at the shoreline.
+  whichever is smaller wins.
 - Sponsorships (`SponsorshipTiers.gd`) -- another straight upgrade
   ladder, multiplies coins earned per catch (`FishingController._award_catch`).
 - Reel visuals are distinct per equipped type (`ReelWheelVisual.gd`,
-  redraws on change like `DockVisual.gd`) -- push-button's enclosed
-  housing with a thumb-bar, spinning's exposed spool + bail arm,
-  baitcaster's star-drag knob.
-- Other placeholder visuals with no real art yet: a two-tone drawn
-  bobber, a static rod + dynamic fishing line (`Line2D`), a simple
-  sky/water/shoreline backdrop tinted per region.
+  redraws on change) -- push-button's enclosed housing with a
+  thumb-bar, spinning's exposed spool + bail arm, baitcaster's
+  star-drag knob.
+- The line-end marker (`BobberVisual.gd`) is style-aware, not always a
+  bobber -- a real two-tone bobber for bobber-style bait, a small
+  neutral lure diamond for retrieve-style lures (there's no bobber in
+  real retrieve fishing).
+- What's under the player (`DockVisual.gd`, redraws on tier/depth
+  change) is positioned at the *bottom* of the screen, not out near the
+  water, so it reads as ground/deck underfoot. Boat tiers show a flat
+  deck color; the dock tier additionally reacts to depth -- shallow
+  reads as standing on sand/dirt at the bank, past a threshold it
+  becomes dock planks, matching how far out you'd actually have to
+  walk a real dock to reach that depth.
+- Rod visual is roughly half the length it started at, tip position
+  unchanged (still anchors the fishing line) -- just a shorter grip.
+- Other placeholder visuals with no real art yet: a dynamic fishing
+  line (`Line2D`), a simple sky/water/shoreline backdrop tinted per
+  region.
 
 Starting gear is a push-button reel + a worm-on-a-bobber rig, both
 owned/equipped by default -- matches how most people actually start,

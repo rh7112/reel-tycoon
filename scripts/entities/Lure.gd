@@ -62,3 +62,11 @@ class_name Lure
 ## would otherwise go for that lure type. Checked before species
 ## preference in FishingController -- see its header comment.
 @export var effective_depth_ft: Vector2 = Vector2(0.0, 999.0)
+
+## The lightest fish that can physically take this lure, in lb -- a 0.2lb
+## bluegill cannot fit a 4" jerkbait in its mouth no matter how well
+## everything else lines up. 0 means no real minimum (a worm or dough
+## ball works on anything from a bluegill to a catfish). See
+## FishingController._lure_size_multiplier -- being even moderately
+## undersized for a lure craters the odds, not just discounts them a bit.
+@export var min_target_weight_lb: float = 0.0
